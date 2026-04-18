@@ -1,6 +1,6 @@
 import Svg, { G, Path } from 'react-native-svg';
 
-const STROKE_INACTIVE = '#99A1AF';
+const STROKE_INACTIVE = '#949EAE';
 const STROKE_PURPLE = '#4F39F6';
 const STROKE_BLUE = '#2563EB';
 

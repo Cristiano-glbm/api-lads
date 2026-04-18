@@ -1,17 +1,20 @@
-import { FontAwesome } from '@expo/vector-icons';
-import { Platform, Pressable, Text, View } from 'react-native';
-
-import { BellIcon20 } from './BellIcon20';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { Image, Platform, Pressable, Text, View } from 'react-native';
 
 export interface LadsTopBarProps {
   /** Cor do “L” dentro do quadrado branco */
   logoTint?: string;
   onPressBell?: () => void;
+  /** Figma Meu Perfil: engrenagem 20×20 #FFF, ~6px de padding (alvo 32×32) */
+  onPressSettings?: () => void;
   /**
    * Inspect Figma (Serviços): 448×56, padding horizontal 16px, `justify-content: space-between`,
    * fundo #432DD7, sombras duplas no header.
+   * `perfil-figma`: fundo transparente + sino (gradiente no ecrã).
+   * `meu-perfil-figma`: LADS + “Meu Perfil” + engrenagem (gradiente no ecrã).
    */
-  variant?: 'default' | 'servicos-figma';
+  variant?: 'default' | 'servicos-figma' | 'perfil-figma' | 'meu-perfil-figma';
 }
 
 const FIGMA_BAR_BG = '#432DD7';
@@ -108,6 +111,15 @@ const FIGMA_SERVICOS_BELL_HIT = {
   position: 'relative' as const,
 } as const;
 
+/** Figma Meu Perfil: ícone engrenagem 20×20 com padding 6 → 32×32 */
+const FIGMA_PERFIL_GEAR_HIT = {
+  width: 32,
+  height: 32,
+  justifyContent: 'center' as const,
+  alignItems: 'center' as const,
+  flexShrink: 0 as const,
+} as const;
+
 /**
  * Inspect Figma (Container logo + “LADS”):
  * `display: flex; width: 80.8px; height: 32px; align-items: center; gap: 8px;`
@@ -151,8 +163,8 @@ const FIGMA_SERVICOS_LEFT_CLUSTER = {
 };
 
 /**
- * Inspect Figma (badge no sino, topbar Serviços):
- * `width: 8px; height: 8px; border-radius: 35791400px; border: 1.067px solid #432DD7; background: #FF6467;`
+ * Inspect Figma (badge no sino, topbar #432DD7 — Home / Eventos / Serviços):
+ * 8×8, círculo, borda ~1.067px #432DD7, preenchimento `#FF8487`.
  */
 const FIGMA_NOTIF_DOT = {
   width: 8,
@@ -160,7 +172,7 @@ const FIGMA_NOTIF_DOT = {
   borderRadius: 9999,
   borderWidth: 1.067,
   borderColor: '#432DD7',
-  backgroundColor: '#FF6467',
+  backgroundColor: '#FF8487',
 } as const;
 
 function BellNotificationDot({ right, top }: { right: number; top: number }) {
@@ -177,8 +189,43 @@ function BellNotificationDot({ right, top }: { right: number; top: number }) {
   );
 }
 
-export function LadsTopBar({ logoTint = '#5D3FD3', onPressBell, variant = 'default' }: LadsTopBarProps) {
-  if (variant === 'servicos-figma') {
+/** Sino Figma: PNG export 20×20 (`bell-topbar-figma.png`), alvo 32×32, ponto #FF8487 — reutilizável (ex.: Fórum). */
+export function LadsTopBarBellButton({ onPress }: { onPress?: () => void }) {
+  const router = useRouter();
+  const handlePress = onPress ?? (() => router.push('/notificacoes'));
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel="Notificações"
+      hitSlop={12}
+      onPress={handlePress}
+      style={[FIGMA_SERVICOS_BELL_HIT, { zIndex: 21 }]}>
+      <Image
+        source={require('@/assets/images/bell-topbar-figma.png')}
+        style={{ width: 20, height: 20 }}
+        resizeMode="contain"
+      />
+      <BellNotificationDot right={4} top={4} />
+    </Pressable>
+  );
+}
+
+const MEU_PERFIL_SUB = {
+  fontFamily: 'Inter_600SemiBold',
+  fontSize: 12,
+  lineHeight: 16,
+  color: 'rgba(255,255,255,0.88)',
+  marginTop: 2,
+  ...(Platform.OS === 'android' ? { includeFontPadding: false as const } : {}),
+} as const;
+
+export function LadsTopBar({
+  logoTint = '#5D3FD3',
+  onPressBell,
+  onPressSettings,
+  variant = 'default',
+}: LadsTopBarProps) {
+  if (variant === 'meu-perfil-figma') {
     return (
       <View
         className="w-full flex-row items-center justify-between"
@@ -191,8 +238,49 @@ export function LadsTopBar({ logoTint = '#5D3FD3', onPressBell, variant = 'defau
           maxWidth: BAR_MAX_WIDTH,
           alignSelf: 'center',
           paddingHorizontal: BAR_HORIZONTAL_PAD,
-          backgroundColor: FIGMA_BAR_BG,
-          ...(Platform.OS === 'web' ? FIGMA_BAR_SHADOW_WEB : FIGMA_BAR_SHADOW_NATIVE),
+          backgroundColor: 'transparent',
+        }}>
+        <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', minWidth: 0, height: 56, paddingRight: 8 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
+            <View style={LOGO_L_SHELL_STYLE}>
+              <Text style={LOGO_L_TYPO}>L</Text>
+            </View>
+            <View style={{ flex: 1, minWidth: 0, justifyContent: 'center' }}>
+              <Text style={LADS_WORDMARK}>LADS</Text>
+              <Text style={MEU_PERFIL_SUB} numberOfLines={1}>
+                Meu Perfil
+              </Text>
+            </View>
+          </View>
+        </View>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Definições"
+          hitSlop={8}
+          onPress={onPressSettings}
+          style={FIGMA_PERFIL_GEAR_HIT}>
+          <Ionicons name="settings-outline" size={20} color="#FFFFFF" />
+        </Pressable>
+      </View>
+    );
+  }
+
+  if (variant === 'servicos-figma' || variant === 'perfil-figma') {
+    const barTransparent = variant === 'perfil-figma';
+    return (
+      <View
+        className="w-full flex-row items-center justify-between"
+        style={{
+          position: 'relative' as const,
+          zIndex: 20,
+          width: '100%',
+          overflow: 'visible' as const,
+          height: 56,
+          maxWidth: BAR_MAX_WIDTH,
+          alignSelf: 'center',
+          paddingHorizontal: BAR_HORIZONTAL_PAD,
+          backgroundColor: barTransparent ? 'transparent' : FIGMA_BAR_BG,
+          ...(barTransparent ? {} : Platform.OS === 'web' ? FIGMA_BAR_SHADOW_WEB : FIGMA_BAR_SHADOW_NATIVE),
         }}>
         <View style={FIGMA_SERVICOS_LEFT_CLUSTER}>
           <View style={FIGMA_SERVICOS_LOGO_WORDMARK_ROW}>
@@ -204,14 +292,7 @@ export function LadsTopBar({ logoTint = '#5D3FD3', onPressBell, variant = 'defau
             </View>
           </View>
         </View>
-        <Pressable
-          accessibilityRole="button"
-          hitSlop={12}
-          onPress={onPressBell}
-          style={[FIGMA_SERVICOS_BELL_HIT, { zIndex: 21 }]}>
-          <BellIcon20 />
-          <BellNotificationDot right={4} top={4} />
-        </Pressable>
+        <LadsTopBarBellButton onPress={onPressBell} />
       </View>
     );
   }
@@ -226,14 +307,7 @@ export function LadsTopBar({ logoTint = '#5D3FD3', onPressBell, variant = 'defau
           LADS
         </Text>
       </View>
-      <Pressable
-        accessibilityRole="button"
-        hitSlop={12}
-        onPress={onPressBell}
-        className="relative h-10 w-10 items-center justify-center">
-        <FontAwesome name="bell-o" size={22} color="#FFFFFF" />
-        <BellNotificationDot right={6} top={6} />
-      </Pressable>
+      <LadsTopBarBellButton onPress={onPressBell} />
     </View>
   );
 }

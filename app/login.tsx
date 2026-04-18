@@ -13,15 +13,29 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import {
+  AUTH_BG_GRADIENT,
+  AUTH_BTN_BORDER,
+  AUTH_BTN_FILL,
+  AUTH_LINK_COLOR,
+  authAndroidFont,
+  authButtonShadow,
+  authCardShadow,
+  authFieldLabelStyle,
+  authTextInputStyle,
+} from "@/constants/authScreenTheme";
+
 export default function LoginScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
 
+  const androidFont = authAndroidFont();
+
   return (
     <LinearGradient
-      colors={["#1D4ED8", "#7C3AED"]}
+      colors={AUTH_BG_GRADIENT}
       start={{ x: 0.5, y: 0 }}
       end={{ x: 0.5, y: 1 }}
       style={{ flex: 1 }}
@@ -40,10 +54,19 @@ export default function LoginScreen() {
           }}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Card */}
-          <View className="rounded-2xl bg-white px-6 py-8 shadow-lg">
-            {/* Logo */}
-            <View className="items-center mb-1">
+          <View
+            style={{
+              backgroundColor: "#FFFFFF",
+              borderRadius: 16,
+              paddingHorizontal: 24,
+              paddingVertical: 32,
+              width: "100%",
+              maxWidth: 448,
+              alignSelf: "center",
+              ...authCardShadow,
+            }}
+          >
+            <View style={{ alignItems: "center", marginBottom: 4 }}>
               <Image
                 source={require("../assets/images/logo-lads.png")}
                 style={{ width: 200, height: 72 }}
@@ -52,10 +75,14 @@ export default function LoginScreen() {
             </View>
 
             <Text
+              {...androidFont}
               style={{
                 textAlign: "center",
-                color: "#6B7280",
-                fontSize: 14,
+                fontFamily: "Inter_100Thin",
+                color: "#000000",
+                fontSize: 15,
+                lineHeight: 15,
+                letterSpacing: 0,
                 marginTop: 16,
                 marginBottom: 20,
               }}
@@ -63,15 +90,7 @@ export default function LoginScreen() {
               Entre na sua conta
             </Text>
 
-            {/* E-mail */}
-            <Text
-              style={{
-                fontSize: 14,
-                fontWeight: "600",
-                color: "#111827",
-                marginBottom: 6,
-              }}
-            >
+            <Text {...androidFont} style={authFieldLabelStyle}>
               E-mail
             </Text>
             <TextInput
@@ -82,28 +101,10 @@ export default function LoginScreen() {
               keyboardType="email-address"
               autoCapitalize="none"
               autoCorrect={false}
-              style={{
-                borderWidth: 1,
-                borderColor: "#E5E7EB",
-                borderRadius: 10,
-                paddingHorizontal: 14,
-                paddingVertical: 12,
-                fontSize: 14,
-                color: "#111827",
-                backgroundColor: "#FAFAFA",
-                marginBottom: 16,
-              }}
+              style={{ ...authTextInputStyle, marginBottom: 16 }}
             />
 
-            {/* Senha */}
-            <Text
-              style={{
-                fontSize: 14,
-                fontWeight: "600",
-                color: "#111827",
-                marginBottom: 6,
-              }}
-            >
+            <Text {...androidFont} style={authFieldLabelStyle}>
               Senha
             </Text>
             <TextInput
@@ -112,55 +113,85 @@ export default function LoginScreen() {
               placeholder="Digite sua senha"
               placeholderTextColor="#9CA3AF"
               secureTextEntry
-              style={{
-                borderWidth: 1,
-                borderColor: "#E5E7EB",
-                borderRadius: 10,
-                paddingHorizontal: 14,
-                paddingVertical: 12,
-                fontSize: 14,
-                color: "#111827",
-                backgroundColor: "#FAFAFA",
-              }}
+              style={{ ...authTextInputStyle }}
             />
 
-            {/* Esqueci minha senha */}
             <Pressable
               onPress={() => router.push("/recuperar-senha")}
               style={{ alignSelf: "flex-end", marginTop: 10, marginBottom: 20 }}
             >
               <Text
-                style={{ fontSize: 13, color: "#4F46E5", fontWeight: "500" }}
+                {...androidFont}
+                style={{
+                  fontFamily: "Inter_600SemiBold",
+                  fontSize: 14,
+                  lineHeight: 14,
+                  letterSpacing: 0,
+                  color: AUTH_LINK_COLOR,
+                }}
               >
                 Esqueci minha senha
               </Text>
             </Pressable>
 
-            {/* Botão Entrar */}
             <Pressable
               onPress={() => router.replace("/home")}
-              android_ripple={{ color: 'rgba(255,255,255,0.25)' }}
-              style={{ backgroundColor: "#4F46E5", borderRadius: 10, paddingVertical: 14, alignItems: "center" }}
+              android_ripple={{ color: "rgba(255,255,255,0.25)" }}
+              style={({ pressed }) => ({
+                backgroundColor: AUTH_BTN_FILL,
+                borderWidth: 1,
+                borderColor: AUTH_BTN_BORDER,
+                borderRadius: 10,
+                minHeight: 44,
+                alignItems: "center",
+                justifyContent: "center",
+                opacity: pressed ? 0.92 : 1,
+                ...authButtonShadow,
+              })}
             >
-              <Text style={{ color: "#fff", fontSize: 15, fontWeight: "700" }}>
+              <Text
+                {...androidFont}
+                style={{
+                  fontFamily: "Inter_700Bold",
+                  color: "#FFFFFF",
+                  fontSize: 15,
+                  letterSpacing: 0.2,
+                }}
+              >
                 Entrar
               </Text>
             </Pressable>
 
-            {/* Cadastre-se */}
             <View
               style={{
                 flexDirection: "row",
                 justifyContent: "center",
                 marginTop: 20,
+                flexWrap: "wrap",
               }}
             >
-              <Text style={{ fontSize: 13, color: "#6B7280" }}>
+              <Text
+                {...androidFont}
+                style={{
+                  fontFamily: "Inter_100Thin",
+                  fontSize: 14,
+                  lineHeight: 14,
+                  letterSpacing: 0,
+                  color: "#000000",
+                }}
+              >
                 Não tem uma conta?{" "}
               </Text>
               <Pressable onPress={() => router.push("/cadastro")}>
                 <Text
-                  style={{ fontSize: 13, color: "#4F46E5", fontWeight: "600" }}
+                  {...androidFont}
+                  style={{
+                    fontFamily: "Inter_600SemiBold",
+                    fontSize: 14,
+                    lineHeight: 14,
+                    letterSpacing: 0,
+                    color: AUTH_LINK_COLOR,
+                  }}
                 >
                   Cadastre-se
                 </Text>

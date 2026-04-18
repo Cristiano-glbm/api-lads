@@ -10,7 +10,7 @@ export const FORUM_HOME_HEADER = {
 } as const;
 
 export const FORUM_PINNED: ForumPinnedPost = {
-  /** Só o texto; o sol do Figma vem de `assets/images/forum-pinned-sol.png` no card fixado */
+  /** Só o texto; o sol antes do título é o componente `ForumPinnedSunIcon20` */
   title: 'Dicas para Madrugada',
   author: 'João Silva',
   likes: 34,

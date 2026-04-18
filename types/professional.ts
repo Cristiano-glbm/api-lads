@@ -8,6 +8,8 @@ export interface ProfessionalListItem {
   rating: number;
   votes: number;
   avatarUrl: string;
+  linkedinUrl?: string;
+  githubUrl?: string;
 }
 
 export interface ProfessionalProfile {

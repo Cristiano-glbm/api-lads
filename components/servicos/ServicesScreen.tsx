@@ -1,13 +1,16 @@
+import { FontAwesome, MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useState } from 'react';
 import { Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { SERVICE_CATEGORIES, SERVICE_REQUESTS } from '@/constants/servicesMock';
+import type { ServiceRequestItem } from '@/types/service';
+import { crossAlert } from '@/utils/crossAlert';
 
-import { ForumBottomNav } from '../forum/ForumBottomNav';
+import { ForumBottomNav, FORUM_BOTTOM_NAV_ROW_HEIGHT } from '../forum/ForumBottomNav';
 import { LadsTopBar } from '../lads/LadsTopBar';
 import { PaperPlaneIcon18 } from '../lads/PaperPlaneIcon18';
-import { CategoriasFolderIcon } from './CategoriasFolderIcon';
 import { ServiceCategoryCard } from './ServiceCategoryCard';
 import { ServiceRequestRow } from './ServiceRequestRow';
 
@@ -17,10 +20,25 @@ export interface ServicesScreenProps {
 
 export function ServicesScreen({ onPressSolicitar }: ServicesScreenProps) {
   const insets = useSafeAreaInsets();
+  const [requests, setRequests] = useState<ServiceRequestItem[]>(SERVICE_REQUESTS);
+
+  function handleSolicitar() {
+    crossAlert(
+      '🛠️ Solicitar Serviço',
+      'Escolha a categoria do serviço que deseja solicitar:',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Continuar', onPress: () => crossAlert('✅ Solicitação iniciada!', 'Em breve nossa equipe entrará em contato para alinhar os detalhes do projeto.') },
+      ],
+    );
+  }
+
+  function cancelarRequisicao(id: string) {
+    setRequests((prev) => prev.filter((r) => r.id !== id));
+  }
 
   /** Fundo de página — Inspect do frame Serviços (Figma) */
   const PAGE_BG = '#F9FAFB';
-  const SECTION_LABEL = '#1E2939';
 
   /**
    * Coluna da página (largura Figma 448px centrada).
@@ -50,9 +68,13 @@ export function ServicesScreen({ onPressSolicitar }: ServicesScreenProps) {
     backgroundColor: PAGE_BG,
   } as const;
 
+  /** Espaço extra abaixo do CTA sobreposto + lista + barra inferior (Expo Go) */
+  const scrollBottomPad = 24 + FORUM_BOTTOM_NAV_ROW_HEIGHT + Math.max(insets.bottom, 12);
+
   const figmaMainScrollContent = {
-    paddingTop: 56,
-    paddingBottom: 64,
+    /** Respiro abaixo do CTA sobreposto até ao 1.º cartão (Figma ~16px) */
+    paddingTop: 16,
+    paddingBottom: scrollBottomPad,
     paddingHorizontal: 0,
     alignItems: 'flex-start' as const,
     flexGrow: 1,
@@ -73,7 +95,7 @@ export function ServicesScreen({ onPressSolicitar }: ServicesScreenProps) {
     flexShrink: 0,
     paddingTop: 16,
     paddingRight: 16,
-    paddingBottom: 0,
+    paddingBottom: 12,
     paddingLeft: 16,
     flexDirection: 'column' as const,
     alignItems: 'flex-start' as const,
@@ -148,6 +170,9 @@ export function ServicesScreen({ onPressSolicitar }: ServicesScreenProps) {
     gap: 16,
   } as const;
 
+  /** Metade do CTA (56px) “entra” no roxo; o restante fica sobre o fundo cinza (Figma). */
+  const CTA_OVERLAP = 28;
+
   /** Figma: `box-shadow: 0 4px 6px -1px rgba(0,0,0,.10), 0 2px 4px -2px rgba(0,0,0,.10)` */
   const solicitarCtaShadowWeb = {
     boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.10), 0 2px 4px -2px rgba(0, 0, 0, 0.10)',
@@ -182,10 +207,10 @@ export function ServicesScreen({ onPressSolicitar }: ServicesScreenProps) {
   const figmaCategoriasContainer = {
     display: 'flex' as const,
     width: '100%' as const,
-    paddingTop: 17.067,
-    paddingRight: 17.067,
-    paddingBottom: 1.067,
-    paddingLeft: 17.067,
+    paddingTop: 16,
+    paddingRight: 16,
+    paddingBottom: 16,
+    paddingLeft: 16,
     flexDirection: 'column' as const,
     alignItems: 'flex-start' as const,
     gap: 12,
@@ -199,21 +224,6 @@ export function ServicesScreen({ onPressSolicitar }: ServicesScreenProps) {
     ...(Platform.OS === 'web' ? categoriasCardShadowWeb : categoriasCardShadowNative),
   } as const;
 
-  /**
-   * Inspect Figma — texto “MINHAS REQUISIÇÕES” / “CATEGORIAS”:
-   * `color: #1E2939; font-weight: 700; font-size: 14px; line-height: 20px;` (142.857%), Inter, `uppercase`.
-   */
-  const categoriasHeadingTypo = {
-    fontFamily: 'Inter_700Bold',
-    fontSize: 14,
-    lineHeight: 20,
-    fontStyle: 'normal' as const,
-    color: '#1E2939',
-    letterSpacing: 0,
-    textTransform: 'uppercase' as const,
-    ...(Platform.OS === 'android' ? { includeFontPadding: false as const } : {}),
-  } as const;
-
   const categoriasGridRow = {
     display: 'flex' as const,
     flexDirection: 'row' as const,
@@ -224,33 +234,37 @@ export function ServicesScreen({ onPressSolicitar }: ServicesScreenProps) {
   } as const;
 
   /**
-   * Inspect Figma — Heading 2 (“MINHAS REQUISIÇÕES” / “CATEGORIAS”):
-   * `display: flex; height: 20px; align-items: center; gap: 4px; flex-shrink: 0; align-self: stretch;`
-   * Conteúdo ícone + texto alinhado ao início da linha (padding vem do contentor pai).
+   * Cabeçalhos de secção (“CATEGORIAS”, “MINHAS REQUISIÇÕES”) — Figma: ícone cinza + título
+   * em maiúsculas à esquerda, alinhado ao conteúdo da grelha / lista.
    */
-  const figmaSectionHeadingRow = {
-    display: 'flex' as const,
+  const servicosSectionHeadingRow = {
     flexDirection: 'row' as const,
-    justifyContent: 'flex-start' as const,
     alignItems: 'center' as const,
-    height: 20,
-    gap: 4,
-    flexShrink: 0,
     alignSelf: 'stretch' as const,
     width: '100%' as const,
+    gap: 6,
+    minHeight: 22,
   } as const;
 
-  const figmaCategoriasHeadingRow = figmaSectionHeadingRow;
-
-  const figmaRequisicoesHeadingRow = {
-    ...figmaSectionHeadingRow,
+  const servicosSectionHeadingIconSlot = {
+    width: 20,
+    height: 20,
+    flexShrink: 0,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
   } as const;
 
-  /** Emoji à esquerda do título (📁, 🕒) — 14/20, cor do rótulo. */
-  const sectionHeadingIconTypo = {
+  const servicosSectionTitleTypo = {
+    fontFamily: 'Inter_700Bold',
     fontSize: 14,
     lineHeight: 20,
-    color: SECTION_LABEL,
+    fontStyle: 'normal' as const,
+    color: '#1E2939',
+    letterSpacing: 0,
+    textTransform: 'uppercase' as const,
+    flexShrink: 1,
+    flex: 1,
+    minWidth: 0,
     ...(Platform.OS === 'android' ? { includeFontPadding: false as const } : {}),
   } as const;
 
@@ -262,7 +276,7 @@ export function ServicesScreen({ onPressSolicitar }: ServicesScreenProps) {
     display: 'flex' as const,
     flexDirection: 'column' as const,
     alignItems: 'flex-start' as const,
-    gap: 12,
+    gap: 16,
     flexShrink: 0,
     alignSelf: 'stretch' as const,
     width: '100%' as const,
@@ -275,10 +289,10 @@ export function ServicesScreen({ onPressSolicitar }: ServicesScreenProps) {
   const figmaRequisicoesCard = {
     display: 'flex' as const,
     width: '100%' as const,
-    paddingTop: 17.067,
-    paddingRight: 17.067,
-    paddingBottom: 1.067,
-    paddingLeft: 17.067,
+    paddingTop: 16,
+    paddingRight: 16,
+    paddingBottom: 16,
+    paddingLeft: 16,
     flexDirection: 'column' as const,
     alignItems: 'flex-start' as const,
     gap: 12,
@@ -337,7 +351,7 @@ export function ServicesScreen({ onPressSolicitar }: ServicesScreenProps) {
 
   return (
     <View className="flex-1" style={{ backgroundColor: PAGE_BG }}>
-      <View style={columnStyle}>
+      <View style={[columnStyle, { flex: 1, minHeight: 0 }]}>
         <View
           className="w-full"
           style={{
@@ -346,62 +360,66 @@ export function ServicesScreen({ onPressSolicitar }: ServicesScreenProps) {
             position: 'relative' as const,
             zIndex: 10,
             overflow: 'visible' as const,
+            paddingBottom: CTA_OVERLAP,
           }}>
           <LadsTopBar logoTint="#432DD7" variant="servicos-figma" />
           <View style={figmaServicesHeaderTextBlock}>
             <View style={figmaServicesHeadingRow}>
-              <Text style={servicesHeadingTypo}>🛠️ Serviços LADS</Text>
+              <Text style={servicesHeadingTypo}>🛠️ Serviços - LADS</Text>
             </View>
             <View style={figmaServicesSubtitleRow}>
               <Text style={servicesSubtitleTypo}>Solicite e acompanhe seus projetos</Text>
             </View>
           </View>
-          <View className="w-full items-center px-4 pb-4">
-            <Pressable
-              accessibilityRole="button"
-              onPress={onPressSolicitar}
-              style={{ width: '100%', alignSelf: 'stretch', flexShrink: 0 }}
-              className="active:opacity-90">
-              <View
-                style={[
-                  { borderRadius: 14, width: '100%' as const },
-                  Platform.OS === 'web' ? solicitarCtaShadowWeb : solicitarCtaShadowNative,
-                ]}>
-                <LinearGradient
-                  colors={['#4F39F6', '#4F39F6']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 0, y: 1 }}
-                  style={solicitarCtaGradientInner}>
-                  <View style={solicitarCtaRow}>
-                    <PaperPlaneIcon18 />
-                    <Text style={servicesCtaLabelTypo}>SOLICITAR SERVIÇO</Text>
-                  </View>
-                </LinearGradient>
-              </View>
-            </Pressable>
-          </View>
+        </View>
+
+        <View
+          style={{
+            marginTop: -CTA_OVERLAP,
+            marginBottom: 12,
+            paddingHorizontal: 16,
+            width: '100%',
+            maxWidth: 448,
+            alignSelf: 'center',
+            zIndex: 20,
+          }}>
+          <Pressable
+            accessibilityRole="button"
+            onPress={onPressSolicitar ?? handleSolicitar}
+            style={{ width: '100%', alignSelf: 'stretch', flexShrink: 0 }}
+            className="active:opacity-90">
+            <View
+              style={[
+                { borderRadius: 14, width: '100%' as const },
+                Platform.OS === 'web' ? solicitarCtaShadowWeb : solicitarCtaShadowNative,
+              ]}>
+              <LinearGradient
+                colors={['#5B21B6', '#4F39F6']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={solicitarCtaGradientInner}>
+                <View style={solicitarCtaRow}>
+                  <PaperPlaneIcon18 />
+                  <Text style={servicesCtaLabelTypo}>SOLICITAR SERVIÇO</Text>
+                </View>
+              </LinearGradient>
+            </View>
+          </Pressable>
         </View>
 
         <ScrollView
-          style={figmaMainScrollArea}
+          style={[figmaMainScrollArea, { flex: 1, minHeight: 0 }]}
           contentContainerStyle={figmaMainScrollContent}
           showsVerticalScrollIndicator={false}>
           <View style={figmaServicesMainColumn}>
           <View style={figmaCategoriasContainer}>
-            <View style={figmaCategoriasHeadingRow}>
-              <View
-                collapsable={false}
-                style={{
-                  width: 20,
-                  height: 20,
-                  flexShrink: 0,
-                  flexGrow: 0,
-                  justifyContent: 'center' as const,
-                  alignItems: 'center' as const,
-                }}>
-                <CategoriasFolderIcon size={18} color={SECTION_LABEL} />
+            <View style={servicosSectionHeadingRow}>
+              <View style={servicosSectionHeadingIconSlot}>
+                <MaterialCommunityIcons name="folder" size={16} color="#475569" />
               </View>
-              <Text style={[categoriasHeadingTypo, { flexShrink: 1, minWidth: 0 }]}>CATEGORIAS</Text>
+              <Text accessibilityRole="header" style={servicosSectionTitleTypo}>
+                Categorias
+              </Text>
             </View>
             <View style={categoriasGridRow}>
               {SERVICE_CATEGORIES.map((c) => (
@@ -411,16 +429,27 @@ export function ServicesScreen({ onPressSolicitar }: ServicesScreenProps) {
           </View>
 
           <View style={figmaRequisicoesCard}>
-            <View style={figmaRequisicoesHeadingRow}>
-              <Text style={sectionHeadingIconTypo}>🕒</Text>
-              <Text style={[categoriasHeadingTypo, { flexShrink: 1, minWidth: 0 }]}>
-                MINHAS REQUISIÇÕES
+            <View style={servicosSectionHeadingRow}>
+              <View style={servicosSectionHeadingIconSlot}>
+                <FontAwesome name="clock-o" size={16} color="#64748B" />
+              </View>
+              <Text accessibilityRole="header" style={servicosSectionTitleTypo}>
+                Minhas requisições
               </Text>
             </View>
             <View style={figmaRequisicoesListContainer}>
-              {SERVICE_REQUESTS.map((r) => (
-                <ServiceRequestRow key={r.id} item={r} />
-              ))}
+              {requests.length === 0 ? (
+                <View style={{ alignItems: 'center', paddingVertical: 24, width: '100%' }}>
+                  <Text style={{ fontSize: 32 }}>📭</Text>
+                  <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#374151', marginTop: 8 }}>
+                    Nenhuma requisição
+                  </Text>
+                </View>
+              ) : (
+                requests.map((r) => (
+                  <ServiceRequestRow key={r.id} item={r} onPressCancelar={cancelarRequisicao} />
+                ))
+              )}
             </View>
           </View>
           </View>

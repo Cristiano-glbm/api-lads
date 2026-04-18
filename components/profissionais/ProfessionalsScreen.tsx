@@ -1,5 +1,6 @@
+import { FontAwesome } from '@expo/vector-icons';
 import { useMemo, useState } from 'react';
-import { ScrollView, Text, TextInput, View } from 'react-native';
+import { Platform, ScrollView, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { PROFESSIONALS_LIST } from '@/constants/professionalsMock';
@@ -41,23 +42,49 @@ export function ProfessionalsScreen({ onPressContratar }: ProfessionalsScreenPro
 
   return (
     <View className="flex-1 bg-forum-bg">
+      <View style={{ flex: 1, minHeight: 0, width: '100%', maxWidth: 448, alignSelf: 'center' }}>
       <View style={{ backgroundColor: '#432DD7', paddingTop: insets.top }}>
         <LadsTopBar variant="servicos-figma" />
         <View style={{ paddingHorizontal: 16, paddingTop: 4, paddingBottom: 18 }}>
-          <Text style={{ color: '#fff', fontSize: 17, fontWeight: '700' }}>👥 Profissionais LADS</Text>
-          <Text style={{ color: 'rgba(255,255,255,0.80)', fontSize: 13, marginTop: 3 }}>Conecte-se com especialistas da nossa comunidade</Text>
+          <Text
+            style={{
+              fontFamily: 'Inter_700Bold',
+              fontSize: 16,
+              lineHeight: 24,
+              color: '#FFFFFF',
+              ...(Platform.OS === 'android' ? { includeFontPadding: false as const } : {}),
+            }}>
+            👥 Profissionais LADS
+          </Text>
+          <Text
+            style={{
+              fontFamily: 'Inter_400Regular',
+              fontSize: 12,
+              lineHeight: 16,
+              color: '#C6D2FF',
+              marginTop: 3,
+              ...(Platform.OS === 'android' ? { includeFontPadding: false as const } : {}),
+            }}>
+            Conecte-se com especialistas da nossa comunidade
+          </Text>
         </View>
       </View>
 
       <View className="px-4 pt-4">
-        <View className="flex-row items-center rounded-full border border-gray-200 bg-white px-4 py-3 shadow-sm">
-          <Text className="mr-2 text-forum-muted">🔍</Text>
+        <View
+          className="flex-row items-center rounded-full border border-gray-200 bg-white px-4 shadow-sm"
+          style={{ minHeight: 48, paddingVertical: 12 }}>
+          <FontAwesome name="search" size={16} color="#9CA3AF" style={{ marginRight: 10 }} />
           <TextInput
             className="flex-1 text-base text-forum-ink"
             placeholder="Buscar profissionais..."
             placeholderTextColor="#9CA3AF"
             value={query}
             onChangeText={setQuery}
+            {...(Platform.OS === 'android'
+              ? { textAlignVertical: 'center' as const, includeFontPadding: false as const }
+              : {})}
+            style={{ paddingVertical: 0, margin: 0 }}
           />
         </View>
       </View>
@@ -65,8 +92,17 @@ export function ProfessionalsScreen({ onPressContratar }: ProfessionalsScreenPro
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        className="max-h-14 flex-grow-0 pt-3"
-        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 8 }}>
+        bounces={false}
+        alwaysBounceHorizontal={false}
+        style={{ width: '100%', flexGrow: 0, paddingTop: 12 }}
+        contentContainerStyle={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 8,
+          paddingLeft: 16,
+          paddingRight: 28,
+          paddingBottom: 12,
+        }}>
         {FILTERS.map((f) => (
           <ProfessionalFilterChip
             key={f.id}
@@ -87,6 +123,7 @@ export function ProfessionalsScreen({ onPressContratar }: ProfessionalsScreenPro
       </ScrollView>
 
       <ForumBottomNav active="profis" accent="blue" />
+      </View>
     </View>
   );
 }

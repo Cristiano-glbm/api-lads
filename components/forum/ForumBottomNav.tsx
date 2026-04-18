@@ -35,16 +35,20 @@ const NAV_SHADOW_NATIVE = {
   elevation: 10,
 } as const;
 
-/** Inspect Figma: cada Button da tab — largura 448/5; altura = área útil da barra 64px */
+/**
+ * Cada tab ocupa 1/5 da largura real da barra.
+ * Evita `width: 448/5` fixo: em ecrãs < 448px isso somava 448px e fazia overflow,
+ * deslocando visualmente Fórum / Profis. / Perfil em relação aos rótulos.
+ */
 const TAB_BTN = {
-  width: NAV_MAX_WIDTH / 5,
+  flex: 1,
+  minWidth: 0,
   height: NAV_TAB_COLUMN_HEIGHT,
   paddingTop: 0,
   flexDirection: 'column' as const,
   justifyContent: 'center' as const,
   alignItems: 'center' as const,
-  gap: 2,
-  flexShrink: 0 as const,
+  gap: 3,
 };
 
 export type ForumBottomTab = 'inicio' | 'eventos' | 'forum' | 'profis' | 'perfil';
@@ -75,8 +79,8 @@ const ACCENT = {
   blue: { fg: '#2563EB' },
 } as const;
 
-/** Inspect Figma: ícone/texto tab inativa — Selection colors */
-const TAB_INACTIVE = '#99A1AF';
+/** Tab inativa — alinhado ao traço do ícone Início (#949EAE) */
+const TAB_INACTIVE = '#949EAE';
 const TAB_ICON_SIZE = 20;
 
 /**
@@ -92,11 +96,10 @@ const TAB_LABEL_CONTAINER = {
 };
 
 /**
- * Inspect Figma (Dev Mode — larguras de exemplo: “Início” ~26×10, “Eventos” ~39×10, “Fórum”/“Profis.” ~31×10, “Perfil” ~28×10): Inter 500, 10/10, letter-spacing 0.
- * Top ≈ −1,1333px no node do texto (várias tabs) — reproduzido como `marginTop` para alinhar ao layout.
- * Largura fixa varia por label no Figma; aqui mantém-se `width: '100%'` no pai + `textAlign: 'center'`.
+ * Inspect Figma: Inter 500, 10/10, letter-spacing 0.
+ * `marginTop` negativo fazia o rótulo subir e sobrepor o ícone nas primeiras tabs (ícones SVG 20×20).
  */
-const TAB_LABEL_MARGIN_TOP = -17 / 15;
+const TAB_LABEL_MARGIN_TOP = 0;
 
 const TAB_LABEL_TEXT = {
   fontFamily: 'Inter_500Medium',

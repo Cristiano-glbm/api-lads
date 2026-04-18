@@ -9,6 +9,8 @@ export const PROFESSIONALS_LIST: ProfessionalListItem[] = [
     rating: 5,
     votes: 47,
     avatarUrl: 'https://i.pravatar.cc/200?img=12',
+    linkedinUrl: 'https://linkedin.com/in/carlos-oliveira-lads',
+    githubUrl: 'https://github.com/carlos-oliveira-lads',
   },
   {
     id: '2',
@@ -18,6 +20,8 @@ export const PROFESSIONALS_LIST: ProfessionalListItem[] = [
     rating: 5,
     votes: 32,
     avatarUrl: 'https://i.pravatar.cc/200?img=45',
+    linkedinUrl: 'https://linkedin.com/in/fernanda-rodrigues-lads',
+    githubUrl: 'https://github.com/fernanda-rodrigues-lads',
   },
   {
     id: '3',
@@ -27,6 +31,8 @@ export const PROFESSIONALS_LIST: ProfessionalListItem[] = [
     rating: 4,
     votes: 28,
     avatarUrl: 'https://i.pravatar.cc/200?img=33',
+    linkedinUrl: 'https://linkedin.com/in/lucas-pereira-lads',
+    githubUrl: 'https://github.com/lucas-pereira-lads',
   },
 ];
 
@@ -58,9 +64,9 @@ export const PROFESSIONAL_CARLOS: ProfessionalProfile = {
     'Mentor de 15 devs',
   ],
   contact: {
-    website: 'site',
-    linkedin: 'linkedin',
-    github: 'github',
-    email: 'email',
+    website: 'https://carlos-lads.dev',
+    linkedin: 'https://linkedin.com/in/carlos-oliveira-lads',
+    github: 'https://github.com/carlos-oliveira-lads',
+    email: 'mailto:carlos@lads.dev',
   },
 };

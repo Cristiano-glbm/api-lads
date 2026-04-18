@@ -1,10 +1,10 @@
-import { Image, Platform, Text, View } from 'react-native';
+import { Platform, Text, View } from 'react-native';
 
 import type { ForumPinnedPost } from '@/types/forum';
-import { bundledImageSource } from '@/utils/bundledImageSource';
 
 import { ForumCommentIcon12 } from './ForumCommentIcon12';
 import { ForumPinnedPinIcon14 } from './ForumPinnedPinIcon14';
+import { ForumPinnedSunIcon20 } from './ForumPinnedSunIcon20';
 import { ForumThumbsUpIcon12 } from './ForumThumbsUpIcon12';
 
 /** Coluna dos ícones (alfinete, like) — alinhamento vertical Figma */
@@ -22,8 +22,6 @@ const FORUM_PINNED_TITLE_MARGIN_TOP = 2;
 /** Linha do título — frame horizontal Figma */
 const FORUM_PINNED_TITLE_ROW_WIDTH = 367.867;
 const FORUM_PINNED_TITLE_ROW_HEIGHT = 20;
-/** Raster exportado do Figma (sol/estrela). `bundledImageSource(require)` — web precisa de `{ uri }`, não string solta no `source`. */
-const FORUM_PINNED_TITLE_SOL_PX = 20;
 const FORUM_PINNED_TITLE_SOL_TEXT_GAP = 8;
 
 /** Padding — Inspect Figma: 13.067 13.067 1.067 13.067 */
@@ -68,7 +66,7 @@ export function ForumPinnedCard({ post }: ForumPinnedCardProps) {
         marginBottom: 0,
         width: '100%',
         maxWidth: FORUM_PINNED_CARD_WIDTH,
-        height: FORUM_PINNED_CARD_HEIGHT,
+        minHeight: FORUM_PINNED_CARD_HEIGHT,
         flexShrink: 0,
         alignSelf: 'stretch',
         paddingTop: FORUM_PINNED_PAD_TOP,
@@ -80,14 +78,14 @@ export function ForumPinnedCard({ post }: ForumPinnedCardProps) {
         justifyContent: 'flex-start',
         borderRadius: 14,
         borderWidth: FORUM_PINNED_BORDER_W,
-        borderColor: '#FEE685',
+        borderColor: '#F59E0B',
         backgroundColor: '#FFFBEB',
       }}>
       <View
         style={{
           width: '100%',
           minWidth: 0,
-          height: FORUM_PINNED_INNER_HEIGHT,
+          minHeight: FORUM_PINNED_INNER_HEIGHT,
           flexShrink: 0,
           alignSelf: 'stretch',
           flexDirection: 'column',
@@ -153,17 +151,7 @@ export function ForumPinnedCard({ post }: ForumPinnedCardProps) {
             alignItems: 'center',
             gap: FORUM_PINNED_TITLE_SOL_TEXT_GAP,
           }}>
-          <Image
-            accessibilityRole="image"
-            accessibilityLabel="Sol"
-            source={bundledImageSource(require('../../assets/images/forum-pinned-sol.png'))}
-            style={{
-              width: FORUM_PINNED_TITLE_SOL_PX,
-              height: FORUM_PINNED_TITLE_SOL_PX,
-              flexShrink: 0,
-            }}
-            resizeMode="contain"
-          />
+          <ForumPinnedSunIcon20 />
           <Text
             {...titleAndroid}
             numberOfLines={1}

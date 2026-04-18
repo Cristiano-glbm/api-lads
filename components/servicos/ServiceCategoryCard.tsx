@@ -27,9 +27,9 @@ export function ServiceCategoryCard({ item, onPress }: ServiceCategoryCardProps)
     minWidth: '42%' as const,
     width: '100%' as const,
     maxWidth: 186.933,
-    height: 98.633,
+    minHeight: 98.633,
     paddingTop: 12,
-    paddingRight: 0,
+    paddingRight: 12,
     paddingBottom: 12,
     paddingLeft: 12,
     flexDirection: 'column' as const,
@@ -42,18 +42,16 @@ export function ServiceCategoryCard({ item, onPress }: ServiceCategoryCardProps)
     backgroundColor: item.surfaceColor,
   } as const;
 
-  /**
-   * Figma (CATEGORIAS): linha do título centrada na largura do cartão.
-   */
+  /** Figma: título alinhado à esquerda (auto-layout `align-items: flex-start`). */
   const titleRow = {
     display: 'flex' as const,
     flexDirection: 'row' as const,
-    justifyContent: 'center' as const,
-    alignItems: 'center' as const,
+    justifyContent: 'flex-start' as const,
+    alignItems: 'flex-start' as const,
     alignSelf: 'stretch' as const,
     minHeight: item.id === 'mobile' || item.id === 'ia' ? 17 : 16.5,
-    paddingTop: 4,
-    paddingBottom: 4,
+    paddingTop: 2,
+    paddingBottom: 2,
   } as const;
 
   /**
@@ -67,7 +65,7 @@ export function ServiceCategoryCard({ item, onPress }: ServiceCategoryCardProps)
           lineHeight: 16.5,
           fontStyle: 'normal' as const,
           color: '#008236',
-          textAlign: 'center' as const,
+          textAlign: 'left' as const,
           ...(Platform.OS === 'android' ? { includeFontPadding: false as const } : {}),
         }
       : item.id === 'ia'
@@ -77,7 +75,7 @@ export function ServiceCategoryCard({ item, onPress }: ServiceCategoryCardProps)
             lineHeight: 16.5,
             fontStyle: 'normal' as const,
             color: '#8200DB',
-            textAlign: 'center' as const,
+            textAlign: 'left' as const,
             ...(Platform.OS === 'android' ? { includeFontPadding: false as const } : {}),
           }
         : {
@@ -86,15 +84,15 @@ export function ServiceCategoryCard({ item, onPress }: ServiceCategoryCardProps)
             lineHeight: 18,
             fontStyle: 'normal' as const,
             color: item.iconColor,
-            textAlign: 'center' as const,
+            textAlign: 'left' as const,
             ...(Platform.OS === 'android' ? { includeFontPadding: false as const } : {}),
           };
 
-  /** Linha da contagem — centrada (Figma CATEGORIAS). */
+  /** Contagem — mesma coluna à esquerda (Figma). */
   const countRow = {
     display: 'flex' as const,
     flexDirection: 'row' as const,
-    justifyContent: 'center' as const,
+    justifyContent: 'flex-start' as const,
     alignItems: 'center' as const,
     alignSelf: 'stretch' as const,
     minHeight: item.id === 'mobile' ? 18 : 16,
@@ -109,7 +107,7 @@ export function ServiceCategoryCard({ item, onPress }: ServiceCategoryCardProps)
           lineHeight: 16,
           fontStyle: 'normal' as const,
           color: '#008236',
-          textAlign: 'center' as const,
+          textAlign: 'left' as const,
           ...(Platform.OS === 'android' ? { includeFontPadding: false as const } : {}),
         }
       : item.id === 'ia'
@@ -119,7 +117,7 @@ export function ServiceCategoryCard({ item, onPress }: ServiceCategoryCardProps)
             lineHeight: 16,
             fontStyle: 'normal' as const,
             color: '#8200DB',
-            textAlign: 'center' as const,
+            textAlign: 'left' as const,
             ...(Platform.OS === 'android' ? { includeFontPadding: false as const } : {}),
           }
         : {
@@ -128,7 +126,7 @@ export function ServiceCategoryCard({ item, onPress }: ServiceCategoryCardProps)
             lineHeight: 16,
             fontStyle: 'normal' as const,
             color: item.iconColor,
-            textAlign: 'center' as const,
+            textAlign: 'left' as const,
             ...(Platform.OS === 'android' ? { includeFontPadding: false as const } : {}),
           };
 
@@ -141,25 +139,23 @@ export function ServiceCategoryCard({ item, onPress }: ServiceCategoryCardProps)
     fontSize: 24,
     lineHeight: 32,
     fontStyle: 'normal' as const,
-    textAlign: 'center' as const,
+    textAlign: 'left' as const,
     color: item.emojiColor ?? item.iconColor,
     ...(Platform.OS === 'android' ? { includeFontPadding: false as const } : {}),
   } as const;
 
-  /**
-   * Faixa do lead (ícone PNG / emoji / FA) — centrada no topo do cartão (Figma CATEGORIAS).
-   */
+  /** Faixa do ícone/emoji — alinhada à esquerda (Inspect Figma: `align-items: flex-start`). */
   const categoryLeadSlot = {
     display: 'flex' as const,
     flexDirection: 'row' as const,
-    justifyContent: 'center' as const,
-    alignItems: 'center' as const,
+    justifyContent: 'flex-start' as const,
+    alignItems: 'flex-start' as const,
     paddingTop: 0,
-    paddingRight: 4.067,
-    paddingBottom: 3.067,
-    paddingLeft: 5,
+    paddingRight: 0,
+    paddingBottom: 0,
+    paddingLeft: 0,
     alignSelf: 'stretch' as const,
-    height: 37,
+    minHeight: 36,
     width: '100%' as const,
   } as const;
 
@@ -173,7 +169,7 @@ export function ServiceCategoryCard({ item, onPress }: ServiceCategoryCardProps)
           <Image
             accessibilityIgnoresInvertColors
             source={leadImage}
-            style={{ width: 22.4, height: 22 }}
+            style={{ width: 24, height: 24 }}
             resizeMode="contain"
           />
         </View>
@@ -191,7 +187,7 @@ export function ServiceCategoryCard({ item, onPress }: ServiceCategoryCardProps)
         </View>
       )}
       <View style={titleRow}>
-        <Text style={titleTypo} numberOfLines={2}>
+        <Text style={[titleTypo, { alignSelf: 'stretch', width: '100%' }]} numberOfLines={2}>
           {item.title}
         </Text>
       </View>

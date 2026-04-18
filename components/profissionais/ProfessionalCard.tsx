@@ -1,7 +1,39 @@
-import { FontAwesome } from '@expo/vector-icons';
-import { Image, Pressable, Text, View } from 'react-native';
+import { FontAwesome, Ionicons } from '@expo/vector-icons';
+import { useState } from 'react';
+import { Image, Linking, Platform, Pressable, Text, View, useWindowDimensions } from 'react-native';
 
 import type { ProfessionalListItem } from '@/types/professional';
+
+/** Alinhado ao texto secundário do cartão (`text-forum-muted`) */
+const AFFILIATION_ICON = '#6B7280';
+
+/** Figma Inspect — LinkedIn */
+const LINK_BLUE = '#1447E6';
+/** Figma Inspect — rótulo GitHub */
+const GITHUB_SLATE = '#364153';
+/** Figma Inspect — CTA Contratar */
+const CTA_BG = '#4F39F6';
+
+/** Figma: cantos dos botões de ação — 10px */
+const ACTION_BTN_RADIUS = 10;
+const ACTION_ICON_TEXT_GAP = 3;
+
+const actionBtnShell = {
+  borderRadius: ACTION_BTN_RADIUS,
+  overflow: 'hidden' as const,
+  gap: ACTION_ICON_TEXT_GAP,
+};
+
+const ACTION_LABEL = {
+  fontFamily: 'Inter_500Medium',
+  fontSize: 12,
+  lineHeight: 16,
+  letterSpacing: 0,
+  ...(Platform.OS === 'android' ? { includeFontPadding: false as const } : {}),
+} as const;
+
+/** Abaixo disto, 3 botões numa só fila ficam espremidos — 2 linhas (LinkedIn|GitHub + Contratar). */
+const ACTION_ROW_STACK_BELOW = 430;
 
 export interface ProfessionalCardProps {
   professional: ProfessionalListItem;
@@ -9,8 +41,15 @@ export interface ProfessionalCardProps {
 }
 
 export function ProfessionalCard({ professional, onPressContratar }: ProfessionalCardProps) {
+  const { width: windowWidth } = useWindowDimensions();
+  const [cardWidth, setCardWidth] = useState(0);
+  const widthBasis = cardWidth > 0 ? cardWidth : windowWidth;
+  const stackActions = widthBasis < ACTION_ROW_STACK_BELOW;
+
   return (
-    <View className="mb-3 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+    <View
+      className="mb-3 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm"
+      onLayout={(e) => setCardWidth(e.nativeEvent.layout.width)}>
       <View className="flex-row">
         <Image
           source={{ uri: professional.avatarUrl }}
@@ -21,7 +60,12 @@ export function ProfessionalCard({ professional, onPressContratar }: Professiona
           <Text className="mt-0.5 text-sm text-forum-primary">
             ⭐ {professional.role}
           </Text>
-          <Text className="mt-0.5 text-xs text-forum-muted">📍 {professional.affiliation}</Text>
+          <View className="mt-0.5 flex-row items-center" style={{ gap: 5 }}>
+            <Ionicons name="location-outline" size={14} color={AFFILIATION_ICON} />
+            <Text className="min-w-0 flex-1 text-xs leading-4 text-forum-muted" numberOfLines={2}>
+              {professional.affiliation}
+            </Text>
+          </View>
           <View className="mt-1 flex-row items-center">
             {Array.from({ length: 5 }).map((_, i) => (
               <FontAwesome
@@ -36,23 +80,90 @@ export function ProfessionalCard({ professional, onPressContratar }: Professiona
           </View>
         </View>
       </View>
-      <View className="mt-4 flex-row gap-2">
-        <Pressable className="flex-1 items-center rounded-xl border border-blue-200 bg-lads-blue-soft py-2.5 active:opacity-80">
-          <FontAwesome name="linkedin-square" size={20} color="#2563EB" />
-          <Text className="mt-1 text-xs font-semibold text-lads-blue">LinkedIn</Text>
-        </Pressable>
-        <Pressable className="flex-1 items-center rounded-xl border border-gray-300 bg-white py-2.5 active:opacity-80">
-          <FontAwesome name="github" size={18} color="#111827" />
-          <Text className="mt-1 text-xs font-semibold text-forum-ink">GitHub</Text>
-        </Pressable>
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => onPressContratar?.(professional.id)}
-          className="flex-1 items-center rounded-xl bg-lads-blue py-2.5 active:opacity-90">
-          <FontAwesome name="briefcase" size={16} color="#FFFFFF" />
-          <Text className="mt-1 text-xs font-semibold text-white">Contratar</Text>
-        </Pressable>
-      </View>
+
+      {stackActions ? (
+        <View className="mt-4" style={{ gap: 10 }}>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <Pressable
+              hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
+              onPress={() => professional.linkedinUrl && Linking.openURL(professional.linkedinUrl)}
+              className="min-h-[48px] flex-1 flex-row items-center justify-center px-3 py-3 active:opacity-80"
+              style={[
+                actionBtnShell,
+                { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: LINK_BLUE },
+              ]}>
+              <FontAwesome name="linkedin-square" size={18} color={LINK_BLUE} />
+              <Text numberOfLines={1} style={{ ...ACTION_LABEL, color: LINK_BLUE }}>
+                LinkedIn
+              </Text>
+            </Pressable>
+            <Pressable
+              hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
+              onPress={() => professional.githubUrl && Linking.openURL(professional.githubUrl)}
+              className="min-h-[48px] flex-1 flex-row items-center justify-center px-3 py-3 active:opacity-80"
+              style={[
+                actionBtnShell,
+                { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#94A3B8' },
+              ]}>
+              <FontAwesome name="github" size={18} color={GITHUB_SLATE} />
+              <Text numberOfLines={1} style={{ ...ACTION_LABEL, color: GITHUB_SLATE }}>
+                GitHub
+              </Text>
+            </Pressable>
+          </View>
+          <Pressable
+            accessibilityRole="button"
+            hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
+            onPress={() => onPressContratar?.(professional.id)}
+            className="min-h-[48px] w-full flex-row items-center justify-center px-3 py-3 active:opacity-90"
+            style={[actionBtnShell, { backgroundColor: CTA_BG }]}>
+            <FontAwesome name="user-plus" size={18} color="#FFFFFF" />
+            <Text numberOfLines={1} style={{ ...ACTION_LABEL, color: '#FFFFFF' }}>
+              Contratar
+            </Text>
+          </Pressable>
+        </View>
+      ) : (
+        <View className="mt-4 flex-row" style={{ gap: 8 }}>
+          <Pressable
+            hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
+            onPress={() => professional.linkedinUrl && Linking.openURL(professional.linkedinUrl)}
+            className="min-h-[48px] min-w-0 flex-1 flex-row items-center justify-center px-3 py-3 active:opacity-80"
+            style={[
+              actionBtnShell,
+              { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: LINK_BLUE },
+            ]}>
+            <FontAwesome name="linkedin-square" size={18} color={LINK_BLUE} />
+            <Text numberOfLines={1} style={{ ...ACTION_LABEL, color: LINK_BLUE }}>
+              LinkedIn
+            </Text>
+          </Pressable>
+          <Pressable
+            hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
+            onPress={() => professional.githubUrl && Linking.openURL(professional.githubUrl)}
+            className="min-h-[48px] min-w-0 flex-1 flex-row items-center justify-center px-3 py-3 active:opacity-80"
+            style={[
+              actionBtnShell,
+              { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#94A3B8' },
+            ]}>
+            <FontAwesome name="github" size={18} color={GITHUB_SLATE} />
+            <Text numberOfLines={1} style={{ ...ACTION_LABEL, color: GITHUB_SLATE }}>
+              GitHub
+            </Text>
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
+            onPress={() => onPressContratar?.(professional.id)}
+            className="min-h-[48px] min-w-0 flex-1 flex-row items-center justify-center px-3 py-3 active:opacity-90"
+            style={[actionBtnShell, { backgroundColor: CTA_BG }]}>
+            <FontAwesome name="user-plus" size={18} color="#FFFFFF" />
+            <Text numberOfLines={1} style={{ ...ACTION_LABEL, color: '#FFFFFF' }}>
+              Contratar
+            </Text>
+          </Pressable>
+        </View>
+      )}
     </View>
   );
 }

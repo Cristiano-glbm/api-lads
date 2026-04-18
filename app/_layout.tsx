@@ -1,6 +1,9 @@
 import '../global.css';
 
 import {
+  Inter_100Thin,
+  Inter_200ExtraLight,
+  Inter_300Light,
   Inter_400Regular,
   Inter_500Medium,
   Inter_600SemiBold,
@@ -32,6 +35,9 @@ export default function RootLayout() {
   const [loaded, error] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
     ...FontAwesome.font,
+    Inter_100Thin,
+    Inter_200ExtraLight,
+    Inter_300Light,
     Inter_400Regular,
     Inter_500Medium,
     Inter_600SemiBold,
@@ -75,6 +81,8 @@ function RootLayoutNav() {
         <Stack.Screen name="perfil" options={{ headerShown: false }} />
         <Stack.Screen name="cadastro" options={{ headerShown: false }} />
         <Stack.Screen name="recuperar-senha" options={{ headerShown: false }} />
+        <Stack.Screen name="notificacoes" options={{ headerShown: false, presentation: 'modal' }} />
+        <Stack.Screen name="configuracoes" options={{ headerShown: false, presentation: 'transparentModal', animation: 'slide_from_bottom' }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
       </Stack>
     </ThemeProvider>

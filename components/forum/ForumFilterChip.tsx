@@ -1,3 +1,4 @@
+import { FORUM_BRAND_PURPLE } from '@/constants/forumHomeLayout';
 import { Platform, Pressable, Text } from 'react-native';
 
 export interface ForumFilterChipProps {
@@ -22,7 +23,9 @@ const INACTIVE_PAD = {
   duvidas: { top: 8.133, right: 10.8, bottom: 6, left: 12.067 },
 } as const;
 
-function inactivePaddingForLabel(label: string): (typeof INACTIVE_PAD)['tecnico'] {
+type InactivePad = (typeof INACTIVE_PAD)[keyof typeof INACTIVE_PAD];
+
+function inactivePaddingForLabel(label: string): InactivePad {
   switch (label) {
     case 'Técnico':
       return INACTIVE_PAD.tecnico;
@@ -37,10 +40,10 @@ function inactivePaddingForLabel(label: string): (typeof INACTIVE_PAD)['tecnico'
   }
 }
 
-const FILTER_ACTIVE_BG = '#4F39F6';
-const FILTER_ACTIVE_BORDER = '#4F39F6';
+const FILTER_ACTIVE_BG = FORUM_BRAND_PURPLE;
+const FILTER_ACTIVE_BORDER = FORUM_BRAND_PURPLE;
 const FILTER_INACTIVE_BG = '#FFFFFF';
-const FILTER_INACTIVE_BORDER = '#E5E7EB';
+const FILTER_INACTIVE_BORDER = '#D1D5DB';
 const FILTER_INACTIVE_TEXT = '#4A5565';
 /** `border-radius` enorme no Figma = pílula */
 const FILTER_PILL_RADIUS = 9999;
@@ -54,7 +57,9 @@ export function ForumFilterChip({ label, active, onPress }: ForumFilterChipProps
       accessibilityState={{ selected: active }}
       accessibilityLabel={`Filtrar por ${label}`}
       onPress={onPress}
-      style={{
+      android_ripple={{ color: active ? 'rgba(255,255,255,0.2)' : 'rgba(67,45,215,0.08)' }}
+      style={({ pressed }) => ({
+        opacity: pressed ? 0.92 : 1,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
@@ -66,7 +71,8 @@ export function ForumFilterChip({ label, active, onPress }: ForumFilterChipProps
         paddingLeft: active ? FILTER_ACTIVE_PAD_LEFT : inactivePad.left,
         backgroundColor: active ? FILTER_ACTIVE_BG : FILTER_INACTIVE_BG,
         borderColor: active ? FILTER_ACTIVE_BORDER : FILTER_INACTIVE_BORDER,
-      }}>
+      })}
+    >
       <Text
         {...(Platform.OS === 'android' ? { includeFontPadding: false } : {})}
         style={{
