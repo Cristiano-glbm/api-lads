@@ -21,3 +21,8 @@ ios/
 
 expo-env.d.ts
 # @end expo-cli
+
+# Claude Code
+.claude/
+DOCUMENTACAO.md
+relatorio-integracao.html
