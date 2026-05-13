@@ -5,8 +5,7 @@ export interface ProfessionalListItem {
   name: string;
   role: string;
   affiliation: string;
-  rating: number;
-  votes: number;
+  followers: number;
   avatarUrl: string;
   linkedinUrl?: string;
   githubUrl?: string;
@@ -18,8 +17,7 @@ export interface ProfessionalProfile {
   headline: string;
   affiliation: string;
   memberSince: string;
-  rating: number;
-  votes: number;
+  followers: number;
   avatarUrl: string;
   expertise: string[];
   achievements: string[];

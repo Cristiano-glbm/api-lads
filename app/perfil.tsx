@@ -1,13 +1,16 @@
-import { Fragment, useState } from 'react';
-import { FontAwesome, Ionicons } from '@expo/vector-icons';
+import { Fragment, useCallback, useEffect, useState } from 'react';
+import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
-import { Image, type ImageSourcePropType, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ForumBottomNav } from '@/components/forum/ForumBottomNav';
 import { LadsTopBar } from '@/components/lads/LadsTopBar';
-import { crossAlert } from '@/utils/crossAlert';
+import { useAuth } from '@/context/AuthContext';
+import * as authService from '@/services/authService';
+import * as eventsService from '@/services/eventsService';
+import * as forumService from '@/services/forumService';
 
 // ─── Constantes Figma ────────────────────────────────────────────────────────
 
@@ -30,14 +33,6 @@ const SETTINGS_ICON_TEXT_GAP = 12;
 const SETTINGS_LINE_INSET = SETTINGS_ICON_SLOT + SETTINGS_ICON_TEXT_GAP;
 const CARD_RADIUS  = 14;
 const CARD_BORDER  = '#F3F4F6';
-const EVENT_CARD_BORDER = 1.0667 as const;
-/** Cartão Meus Eventos — espaçamento equilibrado entre blocos */
-const EVENT_CARD_PAD = 14;
-const EVENT_LEAD_SIZE = 48;
-const EVENT_ROW_GAP = 12;
-const EVENT_BTN_MIN_H = 40;
-const EVENT_BTN_RADIUS = 10;
-const SECTION_LABEL: Record<string, string> = {};
 
 /** Cartões ATIVIDADE (Figma: fundo lavanda claro, cantos ~12, números/legendas índigo) */
 const STAT_CARD_BG = '#F5F7FF';
@@ -51,59 +46,35 @@ const cardShadowWeb    = { boxShadow: '0 1px 3px 0 rgba(0,0,0,.10), 0 1px 2px -1
 const cardShadowNative = { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 3, elevation: 2 } as const;
 const cardShadow       = Platform.OS === 'web' ? cardShadowWeb : cardShadowNative;
 
+// ─── Tipos locais de exibição ─────────────────────────────────────────────────
+
+type ProfilePostItem = { id: string; title: string; tag?: string; likes: number; comments: number; date: string };
+type ProfileEventItem = { id: string; emoji: string; name: string; date: string; location?: string };
+
+function fmtDate(raw: string): string {
+  if (!raw) return '';
+  if (/^\d{2}\/\d{2}\/\d{4}/.test(raw)) return raw.split(/\s+/)[0];
+  const d = new Date(raw);
+  if (isNaN(d.getTime())) return raw;
+  return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+const FALLBACK_EVENTS: ProfileEventItem[] = [
+  { id: 'fe1', emoji: '🌙', name: 'Noite Sem Pijama', date: '15/03/2026', location: 'LADS Lab' },
+  { id: 'fe2', emoji: '💡', name: 'Hackathon LADS 2026', date: '22/04/2026', location: 'Auditório Central' },
+];
+
+const FALLBACK_POSTS: ProfilePostItem[] = [
+  { id: 'fp1', title: 'Qual linguagem usar na madrugada?', tag: 'Técnico', likes: 18, comments: 8, date: '17/08/2026' },
+  { id: 'fp2', title: 'Alguém para formar equipe?', tag: 'Networking', likes: 11, comments: 5, date: '15/03/2026' },
+];
+
 // ─── Dados mock ──────────────────────────────────────────────────────────────
 
 const STATS: Array<{ ion: keyof typeof Ionicons.glyphMap; value: number; label: string }> = [
   { ion: 'calendar-outline', value: 5, label: 'Eventos\ninscritos' },
   { ion: 'chatbubble-ellipses-outline', value: 8, label: 'Tópicos\ncriados' },
   { ion: 'arrow-undo-outline', value: 24, label: 'Respostas' },
-];
-
-const MEUS_EVENTOS: Array<{
-  id: number;
-  title: string;
-  date: string;
-  status: 'confirmado' | 'fila';
-  bgColor: string;
-  /** Arte Figma / assets locais (não emoji) */
-  leadImage?: ImageSourcePropType;
-  leadIon?: keyof typeof Ionicons.glyphMap;
-  leadIonColor?: string;
-}> = [
-  {
-    id: 1,
-    bgColor: '#EDE9FE',
-    title: 'Noite Sem Pijama',
-    date: '15/03/2026',
-    status: 'confirmado',
-    leadImage: require('@/assets/images/forum-moon.png'),
-  },
-  {
-    id: 2,
-    bgColor: '#F3F4F6',
-    title: 'Workshop React',
-    date: '20/03/2026',
-    status: 'confirmado',
-    leadImage: require('@/assets/images/category-laptop.png'),
-  },
-  {
-    id: 3,
-    bgColor: '#DCFCE7',
-    title: 'Seminário',
-    date: '28/03/2026',
-    status: 'confirmado',
-    leadIon: 'school-outline',
-    leadIonColor: '#15803D',
-  },
-  {
-    id: 10,
-    bgColor: '#FFFBE8',
-    title: 'Hackathon Sprint',
-    date: '28/03/2026',
-    status: 'fila',
-    leadIon: 'trophy-outline',
-    leadIonColor: '#CA8A04',
-  },
 ];
 
 /** Figma: quadrado claro + Ionicons, gap 12 com texto; Sair com fundo vermelho claro */
@@ -116,8 +87,6 @@ const SETTINGS: Array<{
   iconColor: string;
 }> = [
   { ion: 'person-outline', title: 'Editar Perfil', subtitle: 'Atualizar informações pessoais', red: false, iconBg: '#ECECF4', iconColor: '#6366F1' },
-  { ion: 'lock-closed-outline', title: 'Privacidade', subtitle: 'Controle de visibilidade', red: false, iconBg: '#ECECF4', iconColor: '#6366F1' },
-  { ion: 'notifications-outline', title: 'Notificações', subtitle: 'Preferências de alertas', red: false, iconBg: '#ECECF4', iconColor: '#6366F1' },
   { ion: 'log-out-outline', title: 'Sair', subtitle: 'Encerrar sessão', red: true, iconBg: '#FEE8E8', iconColor: '#EF4444' },
 ];
 
@@ -137,36 +106,6 @@ function SectionCard({ children }: { children: React.ReactNode }) {
         ...cardShadow,
       }}>
       {children}
-    </View>
-  );
-}
-
-function EventStatusBadge({ status }: { status: 'confirmado' | 'fila' }) {
-  const isOk = status === 'confirmado';
-  return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, flexShrink: 0 }}>
-      <View
-        style={{
-          width: 16,
-          height: 16,
-          borderRadius: 3,
-          backgroundColor: isOk ? '#00A63E' : '#D97706',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}>
-        <Ionicons name={isOk ? 'checkmark' : 'hourglass-outline'} size={isOk ? 11 : 10} color="#fff" />
-      </View>
-      <Text
-        style={{
-          fontFamily: 'Inter_400Regular',
-          fontSize: 12,
-          lineHeight: 16,
-          letterSpacing: 0,
-          color: '#0A0A0A',
-          ...(Platform.OS === 'android' ? { includeFontPadding: false } : {}),
-        }}>
-        {isOk ? 'Confirmado' : 'Fila espera'}
-      </Text>
     </View>
   );
 }
@@ -196,20 +135,49 @@ function SectionTitle({ emoji, label, marginBottom = 14 }: { emoji: string; labe
 export default function PerfilScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { user, logout, updateUser } = useAuth();
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [eventos, setEventos] = useState(MEUS_EVENTOS.map((e) => ({ ...e })));
+  const [myEvents, setMyEvents] = useState<ProfileEventItem[]>(FALLBACK_EVENTS);
+  const [myPosts, setMyPosts] = useState<ProfilePostItem[]>(FALLBACK_POSTS);
 
-  function cancelarEvento(id: number) {
-    crossAlert('Cancelar inscrição', 'Tem certeza que deseja cancelar a inscrição neste evento?', [
-      { text: 'Voltar', style: 'cancel' },
-      {
-        text: 'Cancelar inscrição',
-        style: 'destructive',
-        onPress: () => setEventos((prev) => prev.filter((e) => e.id !== id)),
-      },
-    ]);
-  }
+  useEffect(() => {
+    eventsService.listMyEvents()
+      .then((list) => {
+        if (list.length > 0) {
+          setMyEvents(list.slice(0, 3).map((e) => ({
+            id: e.id,
+            emoji: e.emoji ?? '📅',
+            name: e.name,
+            date: fmtDate(e.date),
+            location: e.location,
+          })));
+        }
+      })
+      .catch(() => {});
 
+    forumService.listPosts()
+      .then((posts) => {
+        const mine = posts.filter((p) => p.author.id === user?.id);
+        const source = mine.length > 0 ? mine : posts;
+        setMyPosts(source.slice(0, 3).map((p) => ({
+          id: p.id,
+          title: p.title,
+          tag: p.tag,
+          likes: p._count?.likes ?? p.likes,
+          comments: p._count?.comments ?? 0,
+          date: fmtDate(p.createdAt),
+        })));
+      })
+      .catch(() => {});
+  }, [user?.id]);
+
+  useFocusEffect(
+    useCallback(() => {
+      authService.getMe()
+        .then((fresh) => { if (fresh) updateUser(fresh); })
+        .catch(() => {});
+    }, [])
+  );
   return (
     <View style={{ flex: 1, backgroundColor: '#F9FAFB' }}>
       {/* ── Header: 1) Top bar 56px + divisor  2) Container gradiente perfil (Figma) ── */}
@@ -262,17 +230,7 @@ export default function PerfilScreen() {
               textTransform: 'uppercase',
               ...(Platform.OS === 'android' ? { includeFontPadding: false } : {}),
             }}>
-            JOÃO SILVA
-          </Text>
-          <Text
-            style={{
-              fontFamily: 'Inter_400Regular',
-              fontSize: 13,
-              color: 'rgba(255,255,255,0.92)',
-              marginTop: 3,
-              ...(Platform.OS === 'android' ? { includeFontPadding: false } : {}),
-            }}>
-            🎓 Estudante de Engenharia
+            {user?.name?.toUpperCase() ?? 'UTILIZADOR'}
           </Text>
           <Text
             style={{
@@ -282,28 +240,46 @@ export default function PerfilScreen() {
               marginTop: 4,
               ...(Platform.OS === 'android' ? { includeFontPadding: false } : {}),
             }}>
-            📍 Faculdade X
+            ✉ {user?.email ?? ''}
           </Text>
-          <Text
-            style={{
-              fontFamily: 'Inter_400Regular',
-              fontSize: 12,
-              color: 'rgba(255,255,255,0.72)',
-              marginTop: 2,
-              ...(Platform.OS === 'android' ? { includeFontPadding: false } : {}),
-            }}>
-            ✉ joao@email.com
-          </Text>
-          <Text
-            style={{
-              fontFamily: 'Inter_400Regular',
-              fontSize: 12,
-              color: 'rgba(255,255,255,0.72)',
-              marginTop: 2,
-              ...(Platform.OS === 'android' ? { includeFontPadding: false } : {}),
-            }}>
-            📞 (+1) 99999-8888
-          </Text>
+          {user?.bio ? (
+            <Text
+              style={{
+                fontFamily: 'Inter_400Regular',
+                fontSize: 13,
+                color: 'rgba(255,255,255,0.92)',
+                marginTop: 6,
+                textAlign: 'center',
+                paddingHorizontal: 24,
+                ...(Platform.OS === 'android' ? { includeFontPadding: false } : {}),
+              }}>
+              {user.bio}
+            </Text>
+          ) : null}
+          {user?.course ? (
+            <Text
+              style={{
+                fontFamily: 'Inter_400Regular',
+                fontSize: 12,
+                color: 'rgba(255,255,255,0.72)',
+                marginTop: 4,
+                ...(Platform.OS === 'android' ? { includeFontPadding: false } : {}),
+              }}>
+              🎓 {user.course}
+            </Text>
+          ) : null}
+          {user?.institution ? (
+            <Text
+              style={{
+                fontFamily: 'Inter_400Regular',
+                fontSize: 12,
+                color: 'rgba(255,255,255,0.72)',
+                marginTop: 2,
+                ...(Platform.OS === 'android' ? { includeFontPadding: false } : {}),
+              }}>
+              📍 {user.institution}
+            </Text>
+          ) : null}
         </View>
         </LinearGradient>
       </View>
@@ -369,193 +345,120 @@ export default function PerfilScreen() {
             ))}
           </View>
 
-          {/* Rating */}
+          {/* Seguidores */}
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 12, color: '#374151' }}>⭐ Rating da Comunidade</Text>
+            <Ionicons name="people-outline" size={16} color={STAT_ICON_TINT} />
+            <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 12, color: '#374151' }}>Seguidores</Text>
           </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 6 }}>
-            {[1, 2, 3, 4].map((i) => (
-              <FontAwesome key={i} name="star" size={18} color="#FACC15" />
-            ))}
-            <FontAwesome name="star-half-o" size={18} color="#FACC15" />
-            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 12, color: '#9CA3AF', marginLeft: 4 }}>(42 votos)</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 6 }}>
+            <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 28, color: STAT_NUMBER_COLOR }}>128</Text>
+            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 12, color: STAT_LABEL_COLOR, alignSelf: 'flex-end', marginBottom: 4 }}>pessoas te seguem</Text>
           </View>
         </SectionCard>
 
-        {/* ── Meus Eventos (layout: ícone 48, título + estado na mesma linha, ações uniformes) ── */}
+        {/* ── Publicações recentes ── */}
         <SectionCard>
-          <SectionTitle emoji="🗓️" label="MEUS EVENTOS" marginBottom={12} />
-
-          {eventos.length === 0 && (
-            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: '#9CA3AF', textAlign: 'center', paddingVertical: 12 }}>
-              Nenhum evento inscrito.
-            </Text>
-          )}
-          {eventos.map((ev, idx) => (
-            <View
-              key={ev.id}
-              style={{
-                width: '100%',
-                borderWidth: EVENT_CARD_BORDER,
-                borderColor: CARD_BORDER,
-                borderRadius: CARD_RADIUS,
-                padding: EVENT_CARD_PAD,
-                gap: EVENT_ROW_GAP,
-                marginBottom: idx < MEUS_EVENTOS.length - 1 ? 12 : 0,
-              }}>
-              <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: EVENT_ROW_GAP }}>
-                <View
+          <SectionTitle emoji="💬" label="PUBLICAÇÕES RECENTES" />
+          {myPosts.map((post, idx) => (
+            <View key={post.id}>
+              {idx > 0 && <View style={{ height: 1, backgroundColor: '#F3F4F6', marginVertical: 10 }} />}
+              <View style={{ gap: 6 }}>
+                <Text
+                  numberOfLines={2}
                   style={{
-                    width: EVENT_LEAD_SIZE,
-                    height: EVENT_LEAD_SIZE,
-                    borderRadius: 10,
-                    backgroundColor: ev.bgColor,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
+                    fontFamily: 'Inter_600SemiBold',
+                    fontSize: 13,
+                    lineHeight: 18,
+                    color: '#1E2939',
+                    ...(Platform.OS === 'android' ? { includeFontPadding: false } : {}),
                   }}>
-                  {ev.leadImage != null ? (
-                    <Image source={ev.leadImage} style={{ width: 28, height: 28 }} resizeMode="contain" />
-                  ) : ev.leadIon != null ? (
-                    <Ionicons name={ev.leadIon} size={24} color={ev.leadIonColor ?? '#111827'} />
+                  {post.title}
+                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                  {post.tag ? (
+                    <View style={{ backgroundColor: '#EEF2FF', borderRadius: 99, paddingHorizontal: 8, paddingVertical: 2 }}>
+                      <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 10, color: '#4338CA' }}>{post.tag}</Text>
+                    </View>
                   ) : null}
-                </View>
-
-                <View style={{ flex: 1, minWidth: 0, gap: 6 }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
-                    <Text
-                      numberOfLines={2}
-                      style={{
-                        flex: 1,
-                        fontFamily: 'Inter_600SemiBold',
-                        fontSize: 14,
-                        lineHeight: 20,
-                        color: '#1E2939',
-                        ...(Platform.OS === 'android' ? { includeFontPadding: false } : {}),
-                      }}>
-                      {ev.title}
-                    </Text>
-                    <EventStatusBadge status={ev.status} />
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                    <Ionicons name="heart-outline" size={13} color="#9CA3AF" />
+                    <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 11, color: '#9CA3AF' }}>{post.likes}</Text>
                   </View>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                    <Ionicons name="calendar-outline" size={14} color="#6A7282" />
-                    <Text
-                      style={{
-                        fontFamily: 'Inter_400Regular',
-                        fontSize: 12,
-                        lineHeight: 16,
-                        letterSpacing: 0,
-                        color: '#6A7282',
-                        ...(Platform.OS === 'android' ? { includeFontPadding: false } : {}),
-                      }}>
-                      {ev.date}
-                    </Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                    <Ionicons name="chatbubble-outline" size={12} color="#9CA3AF" />
+                    <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 11, color: '#9CA3AF' }}>{post.comments}</Text>
                   </View>
+                  <View style={{ flex: 1 }} />
+                  <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 11, color: '#9CA3AF' }}>{post.date}</Text>
                 </View>
-              </View>
-
-              <View style={{ flexDirection: 'row' }}>
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel="Cancelar inscrição neste evento"
-                  onPress={() => cancelarEvento(ev.id)}
-                  style={({ pressed }) => ({
-                    flex: 1,
-                    minHeight: EVENT_BTN_MIN_H,
-                    borderRadius: EVENT_BTN_RADIUS,
-                    borderWidth: 1,
-                    borderColor: '#FDA4AF',
-                    backgroundColor: pressed ? '#FFF1F2' : '#fff',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    paddingHorizontal: 8,
-                    marginRight: 10,
-                  })}>
-                  <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 13, color: '#E11D48' }}>Cancelar</Text>
-                </Pressable>
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel="Ver detalhes do evento"
-                  onPress={() => router.push({ pathname: '/evento-detalhe', params: { id: String(ev.id) } })}
-                  style={({ pressed }) => ({
-                    flex: 1,
-                    minHeight: EVENT_BTN_MIN_H,
-                    borderRadius: EVENT_BTN_RADIUS,
-                    backgroundColor: pressed ? '#3A28C4' : '#432DD7',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    paddingHorizontal: 8,
-                  })}>
-                  <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 13, color: '#fff' }}>Detalhes</Text>
-                </Pressable>
               </View>
             </View>
           ))}
+          <Pressable
+            onPress={() => router.push('/forum')}
+            style={{ marginTop: 14, alignItems: 'center' }}>
+            <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 12, color: STAT_ICON_TINT }}>
+              Ver todas no Fórum →
+            </Text>
+          </Pressable>
         </SectionCard>
 
-        {/* ── Configurações (Figma: ~65px, gap 12, ícone circular; separador alinhado ao texto) ── */}
+        {/* ── Eventos inscritos ── */}
         <SectionCard>
-          {SETTINGS.map((item, idx) => {
-            const showChevron = item.ion !== 'log-out-outline';
-            return (
-              <Fragment key={item.title}>
-                <Pressable
-                  accessibilityRole="button"
-                  style={({ pressed }) => ({
-                    flexDirection: 'row',
+          <SectionTitle emoji="📅" label="EVENTOS INSCRITOS" />
+          {myEvents.map((ev, idx) => (
+            <View key={ev.id}>
+              {idx > 0 && <View style={{ height: 1, backgroundColor: '#F3F4F6', marginVertical: 10 }} />}
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                <View
+                  style={{
+                    width: 44,
+                    height: 44,
+                    borderRadius: 10,
+                    backgroundColor: STAT_CARD_BG,
+                    borderWidth: 1,
+                    borderColor: STAT_CARD_BORDER,
                     alignItems: 'center',
-                    minHeight: SETTINGS_ROW_MIN_H,
-                    paddingVertical: 12,
-                    width: '100%',
-                    backgroundColor: pressed ? SETTINGS_ROW_SEPARATOR : 'transparent',
-                  })}>
-                  <View
+                    justifyContent: 'center',
+                  }}>
+                  <Text style={{ fontSize: 22 }}>{ev.emoji}</Text>
+                </View>
+                <View style={{ flex: 1, minWidth: 0 }}>
+                  <Text
+                    numberOfLines={1}
                     style={{
-                      width: SETTINGS_ICON_SLOT,
-                      height: SETTINGS_ICON_SLOT,
-                      borderRadius: SETTINGS_ICON_SLOT / 2,
-                      backgroundColor: item.iconBg,
-                      alignItems: 'center',
-                      justifyContent: 'center',
+                      fontFamily: 'Inter_600SemiBold',
+                      fontSize: 13,
+                      lineHeight: 18,
+                      color: '#1E2939',
+                      ...(Platform.OS === 'android' ? { includeFontPadding: false } : {}),
                     }}>
-                    <Ionicons name={item.ion} size={20} color={item.iconColor} />
+                    {ev.name}
+                  </Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 3 }}>
+                    <Ionicons name="calendar-outline" size={12} color="#9CA3AF" />
+                    <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 11, color: '#9CA3AF' }}>{ev.date}</Text>
+                    {ev.location ? (
+                      <>
+                        <Text style={{ color: '#D1D5DB', fontSize: 11 }}>·</Text>
+                        <Ionicons name="location-outline" size={12} color="#9CA3AF" />
+                        <Text numberOfLines={1} style={{ fontFamily: 'Inter_400Regular', fontSize: 11, color: '#9CA3AF', flex: 1 }}>{ev.location}</Text>
+                      </>
+                    ) : null}
                   </View>
-
-                  <View style={{ flex: 1, minWidth: 0, marginLeft: SETTINGS_ICON_TEXT_GAP }}>
-                    <Text
-                      style={{
-                        fontFamily: 'Inter_700Bold',
-                        fontSize: 15,
-                        lineHeight: 22,
-                        color: item.red ? '#EF4444' : '#111827',
-                      }}>
-                      {item.title}
-                    </Text>
-                    <Text
-                      style={{
-                        fontFamily: 'Inter_400Regular',
-                        fontSize: 12,
-                        lineHeight: 16,
-                        letterSpacing: 0,
-                        color: '#6A7282',
-                        marginTop: 1,
-                        ...(Platform.OS === 'android' ? { includeFontPadding: false } : {}),
-                      }}>
-                      {item.subtitle}
-                    </Text>
-                  </View>
-
-                  {showChevron ? <Ionicons name="chevron-forward" size={18} color="#D1D5DB" /> : null}
-                </Pressable>
-                {idx < SETTINGS.length - 1 ? (
-                  <View style={{ flexDirection: 'row', paddingLeft: SETTINGS_LINE_INSET }}>
-                    <View style={{ flex: 1, height: 1, backgroundColor: SETTINGS_ROW_SEPARATOR }} />
-                  </View>
-                ) : null}
-              </Fragment>
-            );
-          })}
+                </View>
+              </View>
+            </View>
+          ))}
+          <Pressable
+            onPress={() => router.push('/eventos')}
+            style={{ marginTop: 14, alignItems: 'center' }}>
+            <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 12, color: STAT_ICON_TINT }}>
+              Ver todos os Eventos →
+            </Text>
+          </Pressable>
         </SectionCard>
+
       </ScrollView>
 
       <ForumBottomNav active="perfil" accent="purple" />
@@ -591,7 +494,8 @@ export default function PerfilScreen() {
               const showChevron = item.ion !== 'log-out-outline';
               function handleSettingPress() {
                 if (item.title === 'Notificações') { setSettingsOpen(false); setTimeout(() => router.push('/notificacoes'), 200); }
-                else if (item.title === 'Sair') { setSettingsOpen(false); setTimeout(() => router.replace('/login'), 200); }
+                else if (item.title === 'Editar Perfil') { setSettingsOpen(false); setTimeout(() => router.push('/editar-perfil'), 200); }
+                else if (item.title === 'Sair') { setSettingsOpen(false); setTimeout(() => { logout(); }, 200); }
                 else { setSettingsOpen(false); }
               }
               return (

@@ -5,8 +5,8 @@ export default function ProfissionaisRoute() {
   const router = useRouter();
   return (
     <ProfessionalsScreen
-      onPressContratar={() => {
-        router.push('/perfil-profissional');
+      onPressContratar={(id) => {
+        router.push({ pathname: '/perfil-profissional', params: { id } });
       }}
     />
   );

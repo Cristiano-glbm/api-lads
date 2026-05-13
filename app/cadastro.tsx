@@ -5,10 +5,10 @@ import {
   Image,
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   ScrollView,
   Text,
   TextInput,
+  TouchableOpacity,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -24,16 +24,45 @@ import {
   authFieldLabelStyle,
   authTextInputStyle,
 } from "@/constants/authScreenTheme";
+import { useAuth } from "@/context/AuthContext";
+import { LadsModal } from "@/components/lads/LadsModal";
 
 export default function CadastroScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { register } = useAuth();
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [confirmarSenha, setConfirmarSenha] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
 
   const androidFont = authAndroidFont();
+
+  async function handleCadastro() {
+    if (!nome.trim() || !email.trim() || !senha || !confirmarSenha) {
+      setErro('Preencha todos os campos.');
+      return;
+    }
+    if (senha !== confirmarSenha) {
+      setErro('As senhas não coincidem.');
+      return;
+    }
+    if (senha.length < 6) {
+      setErro('A senha deve ter pelo menos 6 caracteres.');
+      return;
+    }
+    setLoading(true);
+    try {
+      await register(nome.trim(), email.trim(), senha);
+      router.replace('/home');
+    } catch (e: unknown) {
+      setErro(e instanceof Error ? e.message : 'Erro ao cadastrar.');
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <LinearGradient
@@ -142,20 +171,17 @@ export default function CadastroScreen() {
               style={{ ...authTextInputStyle, marginBottom: 24 }}
             />
 
-            <Pressable
-              onPress={() => router.replace("/login")}
-              android_ripple={{ color: "rgba(255,255,255,0.25)" }}
-              style={({ pressed }) => ({
-                backgroundColor: AUTH_BTN_FILL,
-                borderWidth: 1,
-                borderColor: AUTH_BTN_BORDER,
+            <TouchableOpacity
+              onPress={handleCadastro}
+              disabled={loading}
+              activeOpacity={0.75}
+              style={{
+                backgroundColor: '#4139F6',
                 borderRadius: 10,
-                minHeight: 38,
+                height: 48,
                 alignItems: "center",
                 justifyContent: "center",
-                opacity: pressed ? 0.92 : 1,
-                ...authButtonShadow,
-              })}
+              }}
             >
               <Text
                 {...androidFont}
@@ -163,13 +189,12 @@ export default function CadastroScreen() {
                   fontFamily: "Inter_700Bold",
                   color: "#FFFFFF",
                   fontSize: 14,
-                  lineHeight: 14,
                   letterSpacing: 0,
                 }}
               >
-                Cadastrar
+                {loading ? "Cadastrando..." : "Cadastrar"}
               </Text>
-            </Pressable>
+            </TouchableOpacity>
 
             <Text
               {...androidFont}
@@ -210,6 +235,13 @@ export default function CadastroScreen() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+      <LadsModal
+        visible={!!erro}
+        title="Erro no cadastro"
+        message={erro ?? ''}
+        buttons={[{ text: 'OK', style: 'default', onPress: () => setErro(null) }]}
+        onRequestClose={() => setErro(null)}
+      />
     </LinearGradient>
   );
 }

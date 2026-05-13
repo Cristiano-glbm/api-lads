@@ -27,7 +27,7 @@ export const authCardShadow =
           shadowOpacity: 0.12,
           shadowRadius: 20,
         }
-      : { elevation: 10 };
+      : {};
 
 /** Drop shadow botão: Y 4, Blur 4, #000 25% */
 export const authButtonShadow =
@@ -40,7 +40,7 @@ export const authButtonShadow =
           shadowOpacity: 0.25,
           shadowRadius: 4,
         }
-      : { elevation: 4 };
+      : {};
 
 /** Rótulos E-mail / Senha — Figma Inter 600, 14, #000 */
 export const authFieldLabelStyle = {

@@ -1,15 +1,18 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
-import { Platform, Pressable, ScrollView, Text, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import type { ApiNotification } from '@/services/notificationsService';
+import * as notificationsService from '@/services/notificationsService';
 
 const HEADER_PURPLE = '#432DD7';
 
 type NotifCategoria = 'evento' | 'mentoria' | 'servico' | 'forum' | 'sistema';
 
 interface Notificacao {
-  id: number;
+  id: string;
   categoria: NotifCategoria;
   titulo: string;
   descricao: string;
@@ -17,56 +20,37 @@ interface Notificacao {
   lida: boolean;
 }
 
-const NOTIFICACOES_MOCK: Notificacao[] = [
-  {
-    id: 1,
-    categoria: 'evento',
-    titulo: 'Hackathon Sprint — inscrições abertas!',
-    descricao: 'As inscrições para o Hackathon Sprint (28/03 • 19h) foram abertas. Garanta sua vaga.',
-    tempo: '5 min atrás',
-    lida: false,
-  },
-  {
-    id: 2,
-    categoria: 'mentoria',
-    titulo: 'Novo programa de mentoria 2026',
-    descricao: 'O LADS lançou um novo programa de mentoria. Confira as vagas disponíveis.',
-    tempo: '2h atrás',
-    lida: false,
-  },
-  {
-    id: 3,
-    categoria: 'servico',
-    titulo: 'Orçamento aprovado',
-    descricao: 'O orçamento do seu serviço "Design de Logo" foi aprovado pelo cliente.',
-    tempo: '4h atrás',
-    lida: false,
-  },
-  {
-    id: 4,
-    categoria: 'forum',
-    titulo: 'Nova resposta no seu post',
-    descricao: 'Ana Paula respondeu ao seu post "Dúvida sobre React Native".',
-    tempo: 'Ontem',
-    lida: true,
-  },
-  {
-    id: 5,
-    categoria: 'evento',
-    titulo: 'Workshop React — amanhã às 14h',
-    descricao: 'Lembrete: você está inscrito no Workshop React (20/03 • 14h - 17h).',
-    tempo: 'Ontem',
-    lida: true,
-  },
-  {
-    id: 6,
-    categoria: 'sistema',
-    titulo: 'Bem-vindo ao LADS!',
-    descricao: 'Seu cadastro foi confirmado. Explore os recursos disponíveis.',
-    tempo: '3 dias atrás',
-    lida: true,
-  },
-];
+function timeAgo(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const min = Math.floor(diff / 60000);
+  if (min < 60) return `${min} min atrás`;
+  const h = Math.floor(min / 60);
+  if (h < 24) return `${h}h atrás`;
+  const d = Math.floor(h / 24);
+  if (d === 1) return 'Ontem';
+  return `${d} dias atrás`;
+}
+
+function mapNotification(n: ApiNotification): Notificacao {
+  const typeMap: Record<string, NotifCategoria> = {
+    evento: 'evento',
+    event: 'evento',
+    mentoria: 'mentoria',
+    servico: 'servico',
+    service: 'servico',
+    forum: 'forum',
+    sistema: 'sistema',
+    system: 'sistema',
+  };
+  return {
+    id: n.id,
+    categoria: typeMap[n.type?.toLowerCase()] ?? 'sistema',
+    titulo: n.title,
+    descricao: n.body,
+    tempo: timeAgo(n.createdAt),
+    lida: n.read,
+  };
+}
 
 const CATEGORIA_META: Record<NotifCategoria, { icon: string; cor: string; bg: string; label: string }> = {
   evento: { icon: '📅', cor: '#1D4ED8', bg: '#DBEAFE', label: 'Evento' },
@@ -90,7 +74,7 @@ function NotifCard({
   onPress,
 }: {
   notif: Notificacao;
-  onPress: (id: number) => void;
+  onPress: (id: string) => void;
 }) {
   const meta = CATEGORIA_META[notif.categoria];
   return (
@@ -189,16 +173,26 @@ function NotifCard({
 export default function NotificacoesScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const [notifs, setNotifs] = useState<Notificacao[]>(NOTIFICACOES_MOCK);
+  const [notifs, setNotifs] = useState<Notificacao[]>([]);
+  const [apiLoading, setApiLoading] = useState(true);
+
+  useEffect(() => {
+    notificationsService.listNotifications()
+      .then((list) => setNotifs(list.map(mapNotification)))
+      .catch(() => {})
+      .finally(() => setApiLoading(false));
+  }, []);
 
   const naoLidas = notifs.filter((n) => !n.lida).length;
 
-  function marcarLida(id: number) {
+  async function marcarLida(id: string) {
     setNotifs((prev) => prev.map((n) => (n.id === id ? { ...n, lida: true } : n)));
+    try { await notificationsService.markRead(id); } catch { /* silent */ }
   }
 
-  function marcarTodasLidas() {
+  async function marcarTodasLidas() {
     setNotifs((prev) => prev.map((n) => ({ ...n, lida: true })));
+    try { await notificationsService.markAllRead(); } catch { /* silent */ }
   }
 
   return (
@@ -274,7 +268,9 @@ export default function NotificacoesScreen() {
           paddingBottom: Math.max(insets.bottom, 24) + 16,
           gap: 10,
         }}>
-        {notifs.length === 0 ? (
+        {apiLoading ? (
+          <ActivityIndicator style={{ marginTop: 60 }} color={HEADER_PURPLE} />
+        ) : notifs.length === 0 ? (
           <View style={{ alignItems: 'center', paddingTop: 60, gap: 12 }}>
             <Text style={{ fontSize: 48 }}>🔕</Text>
             <Text

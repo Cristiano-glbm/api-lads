@@ -18,6 +18,7 @@ import { useEffect } from 'react';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/components/useColorScheme';
+import { AuthProvider } from '@/context/AuthContext';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -66,25 +67,15 @@ function RootLayoutNav() {
   const colorScheme = useColorScheme();
 
   return (
+    <AuthProvider>
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="index" options={{ headerShown: false }} />
-        <Stack.Screen name="login" options={{ headerShown: false }} />
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="forum" options={{ headerShown: false }} />
-        <Stack.Screen name="eventos" options={{ headerShown: false }} />
-        <Stack.Screen name="servicos" options={{ headerShown: false }} />
-        <Stack.Screen name="profissionais" options={{ headerShown: false }} />
-        <Stack.Screen name="perfil-profissional" options={{ headerShown: false }} />
-        <Stack.Screen name="home" options={{ headerShown: false }} />
-        <Stack.Screen name="evento-detalhe" options={{ headerShown: false }} />
-        <Stack.Screen name="perfil" options={{ headerShown: false }} />
-        <Stack.Screen name="cadastro" options={{ headerShown: false }} />
-        <Stack.Screen name="recuperar-senha" options={{ headerShown: false }} />
-        <Stack.Screen name="notificacoes" options={{ headerShown: false, presentation: 'modal' }} />
-        <Stack.Screen name="configuracoes" options={{ headerShown: false, presentation: 'transparentModal', animation: 'slide_from_bottom' }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="index" />
+        <Stack.Screen name="login" />
+        <Stack.Screen name="cadastro" />
+        <Stack.Screen name="home" />
       </Stack>
     </ThemeProvider>
+    </AuthProvider>
   );
 }

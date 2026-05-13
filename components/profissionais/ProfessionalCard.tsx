@@ -66,17 +66,9 @@ export function ProfessionalCard({ professional, onPressContratar }: Professiona
               {professional.affiliation}
             </Text>
           </View>
-          <View className="mt-1 flex-row items-center">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <FontAwesome
-                key={i}
-                name={i < professional.rating ? 'star' : 'star-o'}
-                size={14}
-                color="#EAB308"
-                style={{ marginRight: 2 }}
-              />
-            ))}
-            <Text className="ml-1 text-xs text-forum-muted">({professional.votes})</Text>
+          <View className="mt-1 flex-row items-center" style={{ gap: 4 }}>
+            <Ionicons name="people-outline" size={14} color={AFFILIATION_ICON} />
+            <Text className="text-xs text-forum-muted">{professional.followers} seguidores</Text>
           </View>
         </View>
       </View>

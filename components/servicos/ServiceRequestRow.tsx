@@ -1,7 +1,8 @@
 import { FontAwesome } from '@expo/vector-icons';
+import { useState } from 'react';
 import { Image, Platform, Pressable, Text, View } from 'react-native';
 
-import { crossAlert } from '@/utils/crossAlert';
+import { LadsModal, type LadsModalButton } from '@/components/lads/LadsModal';
 
 import {
   SERVICE_STATUS_CONCLUIDO,
@@ -227,49 +228,59 @@ function RowIcon({ status }: { status: ServiceRequestStatus }) {
 
 export function ServiceRequestRow({ item, onPressCancelar }: ServiceRequestRowProps) {
   const metaItalic = item.status === 'orcamento';
+  const [modal, setModal] = useState<{ visible: boolean; title: string; message: string; buttons: LadsModalButton[] }>({
+    visible: false, title: '', message: '', buttons: [],
+  });
+  function closeModal() { setModal((m) => ({ ...m, visible: false })); }
+  function showModal(title: string, message: string, buttons: LadsModalButton[]) {
+    setModal({ visible: true, title, message, buttons });
+  }
 
   function handleDetalhes() {
-    crossAlert(
+    showModal(
       `📋 ${item.title}`,
       `Status: Concluído\n${item.meta}\n\nTodas as entregas foram aceitas e o projeto foi finalizado com sucesso.`,
-      [{ text: 'Fechar' }],
+      [{ text: 'Fechar', onPress: closeModal }],
     );
   }
 
   function handleAcompanhar() {
-    crossAlert(
+    showModal(
       `👁️ Acompanhar — ${item.title}`,
       `Status: Em Progresso\n${item.meta}\n\n• Design aprovado ✅\n• Desenvolvimento: 65% ⏳\n• Testes: aguardando 🔄`,
-      [{ text: 'Fechar' }],
+      [{ text: 'Fechar', onPress: closeModal }],
     );
   }
 
   function handleContatar() {
-    crossAlert(
+    showModal(
       `💬 Contatar — ${item.title}`,
       'Como deseja entrar em contato com o prestador?',
       [
-        { text: 'Cancelar', style: 'cancel' },
-        { text: 'Enviar mensagem', onPress: () => crossAlert('✉️ Mensagem enviada!', 'O prestador receberá sua mensagem em breve.') },
+        { text: 'Cancelar', style: 'cancel', onPress: closeModal },
+        {
+          text: 'Enviar mensagem',
+          onPress: () => showModal('✉️ Mensagem enviada!', 'O prestador receberá sua mensagem em breve.', [{ text: 'OK', onPress: closeModal }]),
+        },
       ],
     );
   }
 
   function handleEditar() {
-    crossAlert(
+    showModal(
       `✏️ Editar — ${item.title}`,
       'Em breve você poderá editar os detalhes da sua requisição diretamente pelo app. 🚀',
-      [{ text: 'Entendido' }],
+      [{ text: 'Entendido', onPress: closeModal }],
     );
   }
 
   function handleCancelar() {
-    crossAlert(
+    showModal(
       'Cancelar requisição',
       `Tem certeza que deseja cancelar "${item.title}"? Esta ação não pode ser desfeita.`,
       [
-        { text: 'Voltar', style: 'cancel' },
-        { text: 'Cancelar requisição', style: 'destructive', onPress: () => onPressCancelar?.(item.id) },
+        { text: 'Voltar', style: 'cancel', onPress: closeModal },
+        { text: 'Cancelar', style: 'destructive', onPress: () => { closeModal(); onPressCancelar?.(item.id); } },
       ],
     );
   }
@@ -455,6 +466,14 @@ export function ServiceRequestRow({ item, onPressCancelar }: ServiceRequestRowPr
           </Pressable>
         </View>
       )}
+
+      <LadsModal
+        visible={modal.visible}
+        title={modal.title}
+        message={modal.message}
+        buttons={modal.buttons}
+        onRequestClose={closeModal}
+      />
     </View>
   );
 }

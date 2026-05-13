@@ -3,10 +3,11 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Image, Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Svg, { Path } from 'react-native-svg';
 
-import { ForumBottomNav } from '@/components/forum/ForumBottomNav';
+import { ForumBottomNav, FORUM_BOTTOM_NAV_ROW_HEIGHT } from '@/components/forum/ForumBottomNav';
 import { ForumDualHeaderBar } from '@/components/forum/ForumDualHeaderBar';
-import { crossAlert } from '@/utils/crossAlert';
+import { LadsModal } from '@/components/lads/LadsModal';
 
 /** Acento botões / abas — Inspect Figma «Confirmar Inscrição» */
 const EVENT_ACCENT = '#4F39F6';
@@ -122,11 +123,11 @@ const EVENTOS_DETAIL: Record<string, {
 };
 
 const MEMBROS_MOCK = [
-  { initials: 'JS', name: 'João Silva',        role: 'Organizador'  },
-  { initials: 'MS', name: 'Maria Santos',       role: 'Participante' },
-  { initials: 'CO', name: 'Carlos Oliveira',    role: 'Mentor'       },
-  { initials: 'FR', name: 'Fernanda Rodrigues', role: 'Participante' },
-  { initials: 'PA', name: 'Pedro Alves',        role: 'Participante' },
+  { initials: 'JS', name: 'João Silva',        role: 'Organizador',  professionalId: 'df2d7364-2870-421e-a5b5-ba26def4dcf1' },
+  { initials: 'MS', name: 'Maria Santos',       role: 'Participante', professionalId: '3b631a7c-2d82-4554-8378-558b7dc5da3c' },
+  { initials: 'CO', name: 'Carlos Oliveira',    role: 'Mentor',       professionalId: '29fe1215-4b92-4d6f-8526-888d8f4db4da' },
+  { initials: 'FR', name: 'Fernanda Rodrigues', role: 'Participante', professionalId: 'ab0bbdc4-8654-44f1-a06c-e529fa8d3019' },
+  { initials: 'PA', name: 'Pedro Alves',        role: 'Participante', professionalId: '1821242e-7dfb-4a9a-b2e9-ce40b7ea0878' },
 ];
 
 const CONTEUDOS_MOCK = [
@@ -147,7 +148,8 @@ export default function EventoDetalheScreen() {
   const router  = useRouter();
   const insets  = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState<Tab>('sobre');
-  const [inscrito, setInscrito] = useState(false);
+  const [modal, setModal] = useState({ visible: false, title: '', message: '' });
+  function closeModal() { setModal((m) => ({ ...m, visible: false })); }
 
   const evento  = EVENTOS_DETAIL[id ?? '1'] ?? EVENTOS_DETAIL['1'];
   const vagas   = evento.capacidade - evento.inscritos;
@@ -313,34 +315,6 @@ export default function EventoDetalheScreen() {
               </Text>
             </View>
 
-            <Pressable
-              android_ripple={{ color: 'rgba(255,255,255,0.25)' }}
-              onPress={() => setInscrito((v) => !v)}
-              style={{
-                backgroundColor: inscrito ? '#FFFFFF' : EVENT_ACCENT,
-                borderRadius: 14,
-                minHeight: 44,
-                paddingVertical: 12,
-                paddingHorizontal: 16,
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexDirection: 'row',
-                gap: 8,
-                borderWidth: inscrito ? 1.5 : 0,
-                borderColor: EVENT_ACCENT,
-              }}>
-              <Text style={{ fontSize: 14, lineHeight: 20 }}>{inscrito ? '✅' : '📋'}</Text>
-              <Text
-                style={{
-                  fontFamily: 'Inter_600SemiBold',
-                  fontSize: 14,
-                  lineHeight: 20,
-                  letterSpacing: 0,
-                  color: inscrito ? EVENT_ACCENT : '#FFFFFF',
-                }}>
-                {inscrito ? 'Inscrito — Cancelar?' : 'Confirmar Inscrição'}
-              </Text>
-            </Pressable>
           </>
         )}
 
@@ -395,6 +369,7 @@ export default function EventoDetalheScreen() {
                 </View>
                 <Pressable
                   android_ripple={{ color: 'rgba(79,57,246,0.12)' }}
+                  onPress={() => router.push({ pathname: '/perfil-profissional', params: { id: m.professionalId } })}
                   style={({ pressed }) => ({
                     borderRadius: 10,
                     borderWidth: MEMBRO_ROW_SEPARATOR,
@@ -427,41 +402,6 @@ export default function EventoDetalheScreen() {
         {/* ─── Aba Conteúdo ─── */}
         {activeTab === 'conteudo' && (
           <>
-            <View style={{ alignItems: 'center', marginBottom: 16 }}>
-              <Pressable
-                android_ripple={{ color: 'rgba(255,255,255,0.25)' }}
-                onPress={() =>
-                  crossAlert(
-                    'Adicionar conteúdo',
-                    'Em breve você poderá compartilhar fotos e textos do evento diretamente aqui. Fique atento às novidades! 🚀',
-                    [{ text: 'Entendido', style: 'default' }],
-                  )
-                }
-                style={{
-                  backgroundColor: EVENT_ACCENT,
-                  width: 160,
-                  minHeight: 40,
-                  paddingVertical: 12,
-                  paddingHorizontal: 12,
-                  borderRadius: 14,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  alignSelf: 'center',
-                }}>
-                <Text
-                  style={{
-                    fontFamily: 'Inter_600SemiBold',
-                    fontSize: 14,
-                    lineHeight: 20,
-                    letterSpacing: 0,
-                    color: '#FFFFFF',
-                    textAlign: 'center',
-                  }}>
-                  Adicionar conteúdo
-                </Text>
-              </Pressable>
-            </View>
-
             {CONTEUDOS_MOCK.map((post) => (
               <View
                 key={post.id}
@@ -613,8 +553,17 @@ export default function EventoDetalheScreen() {
         )}
       </ScrollView>
 
+
       <ForumBottomNav active="eventos" accent="purple" />
       </View>
+
+      <LadsModal
+        visible={modal.visible}
+        title={modal.title}
+        message={modal.message}
+        onRequestClose={closeModal}
+        buttons={[{ text: 'Entendido', onPress: closeModal }]}
+      />
     </View>
   );
 }

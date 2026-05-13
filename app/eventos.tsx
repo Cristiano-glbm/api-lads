@@ -1,22 +1,74 @@
 import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Image, Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ForumBottomNav } from '@/components/forum/ForumBottomNav';
 import { LadsTopBar } from '@/components/lads/LadsTopBar';
+import type { ApiEvent } from '@/services/eventsService';
+import * as eventsService from '@/services/eventsService';
 
 // ─── Dados ───────────────────────────────────────────────────────────────────
 
-const EVENTOS = [
-  /** Lista mensal: cartão + selo — Figma (tintas #F5F3FF / selo sólido #9B10FA, texto branco no selo). */
-  { id: 1, emoji: '🌙', bgColor: '#EDE9FE', tag: 'todos', title: 'Noite Sem Pijama',   year: 2026, month: 2, day: 15, dateLabel: '15/03 • Noite inteira', inscritos: 234, descricao: 'Uma noite de programação, networking e muita diversão.', listCardBg: '#FAFAFF', listCardBorder: '#E5E4FF', dateBadgeBg: '#9B10FA', dateBadgeColor: '#FFFFFF' },
-  { id: 2, emoji: '💻', bgColor: '#F3F4F6', tag: 'web',   title: 'Workshop React',      year: 2026, month: 2, day: 20, dateLabel: '20/03 • 14h – 17h',    inscritos: 45,  descricao: 'Aprenda React na prática com os membros do LADS.', listCardBg: '#EFFBFF', listCardBorder: '#B1D3FF', dateBadgeBg: '#2563EB', dateBadgeColor: '#FFFFFF' },
-  { id: 3, emoji: '📚', bgColor: '#DCFCE7', tag: 'todos', title: 'Seminário',           year: 2026, month: 2, day: 28, dateLabel: '28/03 • 19h – 21h',    inscritos: 89,  descricao: 'Palestras e discussões com a comunidade LADS.', listCardBg: '#F0FDF4', listCardBorder: '#DCFCE7', dateBadgeBg: '#16A34A', dateBadgeColor: '#FFFFFF' },
-  { id: 4, emoji: '🎨', bgColor: '#FCE7F3', tag: 'design',title: 'UI/UX Design Day',   year: 2026, month: 3, day: 5,  dateLabel: '05/04 • 9h – 13h',     inscritos: 61,  descricao: 'Workshop de design de interfaces e UX.', listCardBg: '#FDF2F8', listCardBorder: '#FBCFE8', dateBadgeBg: '#DB2777', dateBadgeColor: '#FFFFFF' },
-  { id: 5, emoji: '🤖', bgColor: '#ECFDF5', tag: 'ia',    title: 'IA na Prática',      year: 2026, month: 3, day: 12, dateLabel: '12/04 • 15h – 18h',    inscritos: 120, descricao: 'Explore inteligência artificial e machine learning.', listCardBg: '#F0FDF4', listCardBorder: '#BBF7D0', dateBadgeBg: '#059669', dateBadgeColor: '#FFFFFF' },
-  { id: 6, emoji: '📱', bgColor: '#E0F2FE', tag: 'mobile',title: 'Dev Mobile Day',     year: 2026, month: 3, day: 18, dateLabel: '18/04 • 10h – 16h',    inscritos: 73,  descricao: 'React Native e Expo do básico ao avançado.', listCardBg: '#EFF6FF', listCardBorder: '#BFDBFE', dateBadgeBg: '#1D4ED8', dateBadgeColor: '#FFFFFF' },
+const COLOR_PALETTE = [
+  { listCardBg: '#FAFAFF', listCardBorder: '#E5E4FF', dateBadgeBg: '#9B10FA' },
+  { listCardBg: '#EFFBFF', listCardBorder: '#B1D3FF', dateBadgeBg: '#2563EB' },
+  { listCardBg: '#F0FDF4', listCardBorder: '#DCFCE7', dateBadgeBg: '#16A34A' },
+  { listCardBg: '#FDF2F8', listCardBorder: '#FBCFE8', dateBadgeBg: '#DB2777' },
+  { listCardBg: '#F0FDF4', listCardBorder: '#BBF7D0', dateBadgeBg: '#059669' },
+  { listCardBg: '#EFF6FF', listCardBorder: '#BFDBFE', dateBadgeBg: '#1D4ED8' },
+];
+
+type EventoLocal = {
+  id: string;
+  emoji: string;
+  bgColor: string;
+  tag: string;
+  title: string;
+  year: number;
+  month: number;
+  day: number;
+  dateLabel: string;
+  inscritos: number;
+  descricao: string;
+  listCardBg: string;
+  listCardBorder: string;
+  dateBadgeBg: string;
+  dateBadgeColor: string;
+};
+
+function mapApiEvent(e: ApiEvent, idx: number): EventoLocal {
+  const d = new Date(e.date);
+  const palette = COLOR_PALETTE[idx % COLOR_PALETTE.length];
+  const day = d.getDate();
+  const month = d.getMonth();
+  const year = d.getFullYear();
+  const dateLabel = `${String(day).padStart(2, '0')}/${String(month + 1).padStart(2, '0')} • ${e.location ?? 'LADS'}`;
+  return {
+    id: e.id,
+    emoji: e.emoji ?? '📅',
+    bgColor: '#EDE9FE',
+    tag: 'todos',
+    title: e.name,
+    year,
+    month,
+    day,
+    dateLabel,
+    inscritos: e.subscriberCount ?? 0,
+    descricao: e.description ?? '',
+    dateBadgeColor: '#FFFFFF',
+    ...palette,
+  };
+}
+
+const EVENTOS_FALLBACK: EventoLocal[] = [
+  { id: '1', emoji: '🌙', bgColor: '#EDE9FE', tag: 'todos', title: 'Noite Sem Pijama',   year: 2026, month: 2, day: 15, dateLabel: '15/03 • Noite inteira', inscritos: 234, descricao: 'Uma noite de programação, networking e muita diversão.', listCardBg: '#FAFAFF', listCardBorder: '#E5E4FF', dateBadgeBg: '#9B10FA', dateBadgeColor: '#FFFFFF' },
+  { id: '2', emoji: '💻', bgColor: '#F3F4F6', tag: 'web',   title: 'Workshop React',      year: 2026, month: 2, day: 20, dateLabel: '20/03 • 14h – 17h',    inscritos: 45,  descricao: 'Aprenda React na prática com os membros do LADS.', listCardBg: '#EFFBFF', listCardBorder: '#B1D3FF', dateBadgeBg: '#2563EB', dateBadgeColor: '#FFFFFF' },
+  { id: '3', emoji: '📚', bgColor: '#DCFCE7', tag: 'todos', title: 'Seminário',           year: 2026, month: 2, day: 28, dateLabel: '28/03 • 19h – 21h',    inscritos: 89,  descricao: 'Palestras e discussões com a comunidade LADS.', listCardBg: '#F0FDF4', listCardBorder: '#DCFCE7', dateBadgeBg: '#16A34A', dateBadgeColor: '#FFFFFF' },
+  { id: '4', emoji: '🎨', bgColor: '#FCE7F3', tag: 'design',title: 'UI/UX Design Day',   year: 2026, month: 3, day: 5,  dateLabel: '05/04 • 9h – 13h',     inscritos: 61,  descricao: 'Workshop de design de interfaces e UX.', listCardBg: '#FDF2F8', listCardBorder: '#FBCFE8', dateBadgeBg: '#DB2777', dateBadgeColor: '#FFFFFF' },
+  { id: '5', emoji: '🤖', bgColor: '#ECFDF5', tag: 'ia',    title: 'IA na Prática',      year: 2026, month: 3, day: 12, dateLabel: '12/04 • 15h – 18h',    inscritos: 120, descricao: 'Explore inteligência artificial e machine learning.', listCardBg: '#F0FDF4', listCardBorder: '#BBF7D0', dateBadgeBg: '#059669', dateBadgeColor: '#FFFFFF' },
+  { id: '6', emoji: '📱', bgColor: '#E0F2FE', tag: 'mobile',title: 'Dev Mobile Day',     year: 2026, month: 3, day: 18, dateLabel: '18/04 • 10h – 16h',    inscritos: 73,  descricao: 'React Native e Expo do básico ao avançado.', listCardBg: '#EFF6FF', listCardBorder: '#BFDBFE', dateBadgeBg: '#1D4ED8', dateBadgeColor: '#FFFFFF' },
 ];
 
 const FILTERS = [
@@ -155,15 +207,16 @@ interface CalendarProps {
   month: number;
   selectedDay: number | null;
   onSelectDay: (day: number) => void;
+  eventos: EventoLocal[];
 }
 
-function Calendar({ year, month, selectedDay, onSelectDay }: CalendarProps) {
+function Calendar({ year, month, selectedDay, onSelectDay, eventos }: CalendarProps) {
   const daysInMonth = getDaysInMonth(year, month);
   const firstDay    = getFirstWeekDay(year, month);
 
   // mapa dia → emojis de eventos
   const eventMap: Record<number, string[]> = {};
-  EVENTOS.forEach((e) => {
+  eventos.forEach((e) => {
     if (e.year === year && e.month === month) {
       if (!eventMap[e.day]) eventMap[e.day] = [];
       eventMap[e.day].push(e.emoji);
@@ -253,7 +306,7 @@ const EVENTO_LIST_CARD_SHADOW_NATIVE = {
   elevation: 2,
 } as const;
 
-function EventoCard({ evento }: { evento: (typeof EVENTOS)[0] }) {
+function EventoCard({ evento }: { evento: EventoLocal }) {
   const router = useRouter();
   const mesSelo = MES_ABR[evento.month];
   const categoria = eventListCategoryLine(evento.dateLabel);
@@ -382,8 +435,16 @@ function EventoCard({ evento }: { evento: (typeof EVENTOS)[0] }) {
 
 export default function EventosRoute() {
   const insets = useSafeAreaInsets();
+  const [eventos, setEventos] = useState<EventoLocal[]>(EVENTOS_FALLBACK);
 
-  // Começa em Março 2026 (month=2) para bater com os dados do mock
+  useEffect(() => {
+    eventsService.listEvents()
+      .then((list) => {
+        if (list.length > 0) setEventos(list.map(mapApiEvent));
+      })
+      .catch(() => { /* keep fallback */ });
+  }, []);
+
   const [viewYear,  setViewYear]  = useState(2026);
   const [viewMonth, setViewMonth] = useState(2);
   const [selectedDay, setSelectedDay] = useState<number | null>(15);
@@ -401,7 +462,7 @@ export default function EventosRoute() {
   }
 
   // Filtra eventos: por filtro de categoria E, se dia selecionado, por dia
-  const filteredEventos = EVENTOS.filter((e) => {
+  const filteredEventos = eventos.filter((e) => {
     const tagOk = activeFilter === 'todos' || activeFilter === 'mesa' || e.tag === activeFilter;
     if (!tagOk) return false;
     if (selectedDay !== null) return e.year === viewYear && e.month === viewMonth && e.day === selectedDay;
@@ -480,6 +541,7 @@ export default function EventosRoute() {
           month={viewMonth}
           selectedDay={selectedDay}
           onSelectDay={(d) => setSelectedDay((prev) => (prev === d ? null : d))}
+          eventos={eventos}
         />
 
         {/* ── Filtros (contentor Figma: padding 16, gap 7) ── */}

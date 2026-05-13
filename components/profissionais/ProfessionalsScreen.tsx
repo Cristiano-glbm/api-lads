@@ -1,44 +1,60 @@
 import { FontAwesome } from '@expo/vector-icons';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Platform, ScrollView, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { PROFESSIONALS_LIST } from '@/constants/professionalsMock';
-import type { ProfessionalFilterId } from '@/types/professional';
+import type { ProfessionalListItem } from '@/types/professional';
+import type { ApiProfessional } from '@/services/professionalsService';
+import * as professionalsService from '@/services/professionalsService';
 
 import { ForumBottomNav } from '../forum/ForumBottomNav';
 import { LadsTopBar } from '../lads/LadsTopBar';
 import { ProfessionalCard } from './ProfessionalCard';
-import { ProfessionalFilterChip } from './ProfessionalFilterChip';
-
-const FILTERS: { id: ProfessionalFilterId; label: string }[] = [
-  { id: 'todos', label: 'Todos' },
-  { id: 'ia', label: 'IA' },
-  { id: 'web', label: 'Web' },
-  { id: 'mobile', label: 'Mobile' },
-  { id: 'devops', label: 'DevOps' },
-  { id: 'design', label: 'Design' },
-];
 
 export interface ProfessionalsScreenProps {
   onPressContratar?: (id: string) => void;
 }
 
+function mapApiProfessional(p: ApiProfessional): ProfessionalListItem {
+  return {
+    id: p.id,
+    name: p.user?.name ?? 'Profissional',
+    role: p.headline ?? '',
+    affiliation: p.affiliation ?? '',
+    followers: p.votes ?? 0,
+    avatarUrl: p.user?.avatarUrl ?? '',
+    linkedinUrl: p.linkedin,
+    githubUrl: p.github,
+  };
+}
+
 export function ProfessionalsScreen({ onPressContratar }: ProfessionalsScreenProps) {
   const insets = useSafeAreaInsets();
   const [query, setQuery] = useState('');
-  const [filter, setFilter] = useState<ProfessionalFilterId>('todos');
+  const [professionals, setProfessionals] = useState<ProfessionalListItem[]>(PROFESSIONALS_LIST);
+
+  useEffect(() => {
+    professionalsService.listProfessionals()
+      .then((list) => {
+        const filtered = list.filter((p) =>
+          p.user?.role === 'PROFESSIONAL' || p.user?.role === 'COORDINATOR'
+        );
+        if (filtered.length > 0) setProfessionals(filtered.map(mapApiProfessional));
+      })
+      .catch(() => { /* keep fallback */ });
+  }, []);
 
   const list = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return PROFESSIONALS_LIST;
-    return PROFESSIONALS_LIST.filter(
+    if (!q) return professionals;
+    return professionals.filter(
       (p) =>
         p.name.toLowerCase().includes(q) ||
         p.role.toLowerCase().includes(q) ||
         p.affiliation.toLowerCase().includes(q),
     );
-  }, [query]);
+  }, [query, professionals]);
 
   return (
     <View className="flex-1 bg-forum-bg">
@@ -90,32 +106,8 @@ export function ProfessionalsScreen({ onPressContratar }: ProfessionalsScreenPro
       </View>
 
       <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        bounces={false}
-        alwaysBounceHorizontal={false}
-        style={{ width: '100%', flexGrow: 0, paddingTop: 12 }}
-        contentContainerStyle={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: 8,
-          paddingLeft: 16,
-          paddingRight: 28,
-          paddingBottom: 12,
-        }}>
-        {FILTERS.map((f) => (
-          <ProfessionalFilterChip
-            key={f.id}
-            label={f.label}
-            active={filter === f.id}
-            onPress={() => setFilter(f.id)}
-          />
-        ))}
-      </ScrollView>
-
-      <ScrollView
         className="flex-1 px-4"
-        contentContainerStyle={{ paddingBottom: 16 }}
+        contentContainerStyle={{ paddingTop: 12, paddingBottom: 16 }}
         showsVerticalScrollIndicator={false}>
         {list.map((p) => (
           <ProfessionalCard key={p.id} professional={p} onPressContratar={onPressContratar} />

@@ -1,14 +1,16 @@
 import { FontAwesome, MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useState } from 'react';
-import { Platform, Pressable, ScrollView, Text, View } from 'react-native';
+import { useFocusEffect } from 'expo-router';
+import { useCallback, useState } from 'react';
+import { ActivityIndicator, Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { SERVICE_CATEGORIES, SERVICE_REQUESTS } from '@/constants/servicesMock';
 import type { ServiceRequestItem } from '@/types/service';
-import { crossAlert } from '@/utils/crossAlert';
-
+import type { ApiServiceRequest } from '@/services/servicesService';
+import * as servicesService from '@/services/servicesService';
 import { ForumBottomNav, FORUM_BOTTOM_NAV_ROW_HEIGHT } from '../forum/ForumBottomNav';
+import { LadsModal } from '../lads/LadsModal';
 import { LadsTopBar } from '../lads/LadsTopBar';
 import { PaperPlaneIcon18 } from '../lads/PaperPlaneIcon18';
 import { ServiceCategoryCard } from './ServiceCategoryCard';
@@ -18,23 +20,57 @@ export interface ServicesScreenProps {
   onPressSolicitar?: () => void;
 }
 
+function mapApiRequest(r: ApiServiceRequest): ServiceRequestItem {
+  const statusMap: Record<string, 'concluido' | 'progresso' | 'orcamento'> = {
+    CONCLUIDO: 'concluido',
+    PROGRESSO: 'progresso',
+    ORCAMENTO: 'orcamento',
+    CANCELADO: 'orcamento',
+  };
+  const status = statusMap[r.status] ?? 'orcamento';
+  const title = r.title ?? r.service?.title ?? 'Solicitação';
+
+  let meta = 'Aguardando resposta...';
+  if (status === 'concluido') {
+    meta = `Entregue: ${new Date(r.updatedAt).toLocaleDateString('pt-BR')}`;
+  } else if (status === 'progresso') {
+    meta = r.prazo ? `Prazo: ${r.prazo}` : `Desde: ${new Date(r.createdAt).toLocaleDateString('pt-BR')}`;
+  }
+
+  return { id: r.id, title, status, meta };
+}
+
 export function ServicesScreen({ onPressSolicitar }: ServicesScreenProps) {
   const insets = useSafeAreaInsets();
   const [requests, setRequests] = useState<ServiceRequestItem[]>(SERVICE_REQUESTS);
+  const [loading, setLoading] = useState(false);
+  const [modal, setModal] = useState({ visible: false, title: '', message: '', confirmed: false });
+
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      setLoading(true);
+      servicesService.getMyRequests()
+        .then((list) => {
+          if (!active) return;
+          if (list.length > 0) setRequests(list.map(mapApiRequest));
+          else setRequests([]);
+        })
+        .catch(() => { if (active) setRequests(SERVICE_REQUESTS); })
+        .finally(() => { if (active) setLoading(false); });
+      return () => { active = false; };
+    }, []),
+  );
+
+  function closeModal() { setModal((m) => ({ ...m, visible: false })); }
 
   function handleSolicitar() {
-    crossAlert(
-      '🛠️ Solicitar Serviço',
-      'Escolha a categoria do serviço que deseja solicitar:',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        { text: 'Continuar', onPress: () => crossAlert('✅ Solicitação iniciada!', 'Em breve nossa equipe entrará em contato para alinhar os detalhes do projeto.') },
-      ],
-    );
+    setModal({ visible: true, title: '🛠️ Solicitar Serviço', message: 'Escolha a categoria do serviço que deseja solicitar:', confirmed: false });
   }
 
-  function cancelarRequisicao(id: string) {
+  async function cancelarRequisicao(id: string) {
     setRequests((prev) => prev.filter((r) => r.id !== id));
+    try { await servicesService.cancelRequest(id); } catch { /* silent */ }
   }
 
   /** Fundo de página — Inspect do frame Serviços (Figma) */
@@ -438,7 +474,14 @@ export function ServicesScreen({ onPressSolicitar }: ServicesScreenProps) {
               </Text>
             </View>
             <View style={figmaRequisicoesListContainer}>
-              {requests.length === 0 ? (
+              {loading ? (
+                <View style={{ alignItems: 'center', paddingVertical: 24, width: '100%' }}>
+                  <ActivityIndicator size="small" color="#432DD7" />
+                  <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: '#64748B', marginTop: 8 }}>
+                    Carregando...
+                  </Text>
+                </View>
+              ) : requests.length === 0 ? (
                 <View style={{ alignItems: 'center', paddingVertical: 24, width: '100%' }}>
                   <Text style={{ fontSize: 32 }}>📭</Text>
                   <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#374151', marginTop: 8 }}>
@@ -459,6 +502,24 @@ export function ServicesScreen({ onPressSolicitar }: ServicesScreenProps) {
           <ForumBottomNav active="inicio" accent="purple" />
         </View>
       </View>
+
+      <LadsModal
+        visible={modal.visible && !modal.confirmed}
+        title={modal.title}
+        message={modal.message}
+        onRequestClose={closeModal}
+        buttons={[
+          { text: 'Cancelar', style: 'cancel', onPress: closeModal },
+          { text: 'Continuar', onPress: () => setModal({ visible: true, title: '✅ Solicitação iniciada!', message: 'Em breve nossa equipe entrará em contato para alinhar os detalhes do projeto.', confirmed: true }) },
+        ]}
+      />
+      <LadsModal
+        visible={modal.visible && modal.confirmed}
+        title={modal.title}
+        message={modal.message}
+        onRequestClose={closeModal}
+        buttons={[{ text: 'OK', onPress: closeModal }]}
+      />
     </View>
   );
 }

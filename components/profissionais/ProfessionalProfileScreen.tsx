@@ -6,9 +6,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { PROFESSIONAL_CARLOS } from '@/constants/professionalsMock';
 import type { ProfessionalProfile } from '@/types/professional';
-import { crossAlert } from '@/utils/crossAlert';
-
 import { ForumBottomNav } from '../forum/ForumBottomNav';
+import { LadsModal, type LadsModalButton } from '../lads/LadsModal';
 
 /** Frame / barra — Inspect Figma (2.ª e 3.ª refs) */
 const BAR_MAX_W = 448;
@@ -90,29 +89,36 @@ export function ProfessionalProfileScreen({
 }: ProfessionalProfileScreenProps) {
   const insets = useSafeAreaInsets();
   const [seguindo, setSeguindo] = useState(false);
+  const [modal, setModal] = useState<{ visible: boolean; title: string; message: string; buttons: LadsModalButton[] }>({
+    visible: false, title: '', message: '', buttons: [],
+  });
+  function closeModal() { setModal((m) => ({ ...m, visible: false })); }
+  function showModal(title: string, message: string, buttons: LadsModalButton[]) {
+    setModal({ visible: true, title, message, buttons });
+  }
 
   function abrirLink(url: string) {
     Linking.openURL(url).catch(() =>
-      crossAlert('Ops!', 'Não foi possível abrir o link.'),
+      showModal('Ops!', 'Não foi possível abrir o link.', [{ text: 'Fechar', onPress: closeModal }]),
     );
   }
 
   function onPressSolicitarDefault() {
-    crossAlert(
+    showModal(
       '💼 Solicitar Serviço',
       `Deseja enviar uma solicitação de serviço para ${professional.name}?`,
       [
-        { text: 'Cancelar', style: 'cancel' },
-        { text: 'Confirmar', onPress: () => crossAlert('✅ Solicitação enviada!', 'O profissional receberá sua solicitação em breve.') },
+        { text: 'Cancelar', style: 'cancel', onPress: closeModal },
+        { text: 'Confirmar', onPress: () => showModal('✅ Solicitação enviada!', 'O profissional receberá sua solicitação em breve.', [{ text: 'OK', onPress: closeModal }]) },
       ],
     );
   }
 
   function onPressMensagemDefault() {
-    crossAlert(
+    showModal(
       '💬 Enviar Mensagem',
       'Em breve você poderá enviar mensagens diretamente pelo LADS. Fique atento às novidades! 🚀',
-      [{ text: 'Entendido' }],
+      [{ text: 'Entendido', onPress: closeModal }],
     );
   }
 
@@ -227,11 +233,9 @@ export function ProfessionalProfileScreen({
               Membro desde: {professional.memberSince}
             </Text>
           </View>
-          <View className="mt-2 flex-row items-center">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <FontAwesome key={i} name="star" size={16} color={STAR_GOLD} style={{ marginHorizontal: 1 }} />
-            ))}
-            <Text className="ml-2 text-sm text-white/90">({professional.votes} votos)</Text>
+          <View className="mt-2 flex-row items-center" style={{ gap: 6 }}>
+            <Ionicons name="people-outline" size={16} color="rgba(255,255,255,0.92)" />
+            <Text className="text-sm text-white/90">{professional.followers} seguidores</Text>
           </View>
         </View>
       </LinearGradient>
@@ -381,6 +385,14 @@ export function ProfessionalProfileScreen({
       </ScrollView>
 
       <ForumBottomNav active="profis" accent="blue" />
+
+      <LadsModal
+        visible={modal.visible}
+        title={modal.title}
+        message={modal.message}
+        buttons={modal.buttons}
+        onRequestClose={closeModal}
+      />
     </View>
   );
 }

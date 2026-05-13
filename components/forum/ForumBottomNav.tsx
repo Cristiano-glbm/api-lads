@@ -4,11 +4,8 @@ import type { ComponentProps } from 'react';
 import { Platform, Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ForumChatTabIcon20 } from './ForumChatTabIcon20';
 import { ForumEventsTabIcon20 } from './ForumEventsTabIcon20';
 import { ForumHomeTabIcon20 } from './ForumHomeTabIcon20';
-import { ForumPerfilTabIcon20 } from './ForumPerfilTabIcon20';
-import { ForumProfisTabIcon20 } from './ForumProfisTabIcon20';
 
 /** Inspect Figma (barra inferior): border-top #E5E7EB */
 const NAV_BORDER = '#E5E7EB';
@@ -51,11 +48,10 @@ const TAB_BTN = {
   gap: 3,
 };
 
-export type ForumBottomTab = 'inicio' | 'eventos' | 'forum' | 'profis' | 'perfil';
+export type ForumBottomTab = 'inicio' | 'eventos' | 'forum' | 'perfil' | 'profis';
 
 export interface ForumBottomNavProps {
   active: ForumBottomTab;
-  /** Figma: abas Serviços/Início em roxo; Profissionais/Perfil em azul */
   accent?: 'purple' | 'blue';
 }
 
@@ -66,11 +62,11 @@ interface NavItem {
 }
 
 const ITEMS: NavItem[] = [
-  { id: 'inicio', label: 'Início', icon: 'home' },
-  { id: 'eventos', label: 'Eventos', icon: 'calendar' },
-  { id: 'forum', label: 'Fórum', icon: 'comments-o' },
-  { id: 'profis', label: 'Profis.', icon: 'users' },
-  { id: 'perfil', label: 'Perfil', icon: 'user' },
+  { id: 'inicio',  label: 'Início',  icon: 'home'      },
+  { id: 'eventos', label: 'Eventos', icon: 'calendar'  },
+  { id: 'forum',   label: 'Fórum',   icon: 'comments'  },
+  { id: 'profis',  label: 'Profis.',  icon: 'users'     },
+  { id: 'perfil',  label: 'Perfil',  icon: 'user'      },
 ];
 
 const ACCENT = {
@@ -155,23 +151,11 @@ export function ForumBottomNav({ active, accent = 'purple' }: ForumBottomNavProp
   const goTab = (id: ForumBottomTab) => {
     if (id === active) return;
     switch (id) {
-      case 'inicio':
-        router.push('/home');
-        break;
-      case 'eventos':
-        router.push('/eventos');
-        break;
-      case 'forum':
-        router.push('/forum');
-        break;
-      case 'profis':
-        router.push('/profissionais');
-        break;
-      case 'perfil':
-        router.push('/perfil');
-        break;
-      default:
-        break;
+      case 'inicio':   router.push('/home');           break;
+      case 'eventos':  router.push('/eventos');        break;
+      case 'forum':    router.push('/forum');          break;
+      case 'profis':   router.push('/profissionais');  break;
+      case 'perfil':   router.push('/perfil');         break;
     }
   };
 
@@ -234,12 +218,6 @@ export function ForumBottomNav({ active, accent = 'purple' }: ForumBottomNavProp
                   <ForumHomeTabIcon20 active={isActive} accent={accent} />
                 ) : item.id === 'eventos' ? (
                   <ForumEventsTabIcon20 active={isActive} accent={accent} />
-                ) : item.id === 'forum' ? (
-                  <ForumChatTabIcon20 active={isActive} accent={accent} />
-                ) : item.id === 'profis' ? (
-                  <ForumProfisTabIcon20 active={isActive} accent={accent} />
-                ) : item.id === 'perfil' ? (
-                  <ForumPerfilTabIcon20 active={isActive} accent={accent} />
                 ) : (
                   <FontAwesome name={item.icon} size={TAB_ICON_SIZE} color={color} />
                 )}

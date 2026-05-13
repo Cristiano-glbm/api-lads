@@ -5,10 +5,10 @@ import {
   Image,
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   ScrollView,
   Text,
   TextInput,
+  TouchableOpacity,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -24,14 +24,35 @@ import {
   authFieldLabelStyle,
   authTextInputStyle,
 } from "@/constants/authScreenTheme";
+import { useAuth } from "@/context/AuthContext";
+import { LadsModal } from "@/components/lads/LadsModal";
 
 export default function LoginScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
 
   const androidFont = authAndroidFont();
+
+  async function handleLogin() {
+    if (!email.trim() || !senha.trim()) {
+      setErro('Preencha e-mail e senha.');
+      return;
+    }
+    setLoading(true);
+    try {
+      await login(email.trim(), senha);
+      router.replace('/home');
+    } catch (e: unknown) {
+      setErro(e instanceof Error ? e.message : 'Erro ao fazer login.');
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <LinearGradient
@@ -116,7 +137,7 @@ export default function LoginScreen() {
               style={{ ...authTextInputStyle }}
             />
 
-            <Pressable
+            <TouchableOpacity
               onPress={() => router.push("/recuperar-senha")}
               style={{ alignSelf: "flex-end", marginTop: 10, marginBottom: 20 }}
             >
@@ -132,22 +153,19 @@ export default function LoginScreen() {
               >
                 Esqueci minha senha
               </Text>
-            </Pressable>
+            </TouchableOpacity>
 
-            <Pressable
-              onPress={() => router.replace("/home")}
-              android_ripple={{ color: "rgba(255,255,255,0.25)" }}
-              style={({ pressed }) => ({
-                backgroundColor: AUTH_BTN_FILL,
-                borderWidth: 1,
-                borderColor: AUTH_BTN_BORDER,
+            <TouchableOpacity
+              onPress={handleLogin}
+              disabled={loading}
+              activeOpacity={0.75}
+              style={{
+                backgroundColor: '#4139F6',
                 borderRadius: 10,
-                minHeight: 44,
+                height: 48,
                 alignItems: "center",
                 justifyContent: "center",
-                opacity: pressed ? 0.92 : 1,
-                ...authButtonShadow,
-              })}
+              }}
             >
               <Text
                 {...androidFont}
@@ -158,9 +176,9 @@ export default function LoginScreen() {
                   letterSpacing: 0.2,
                 }}
               >
-                Entrar
+                {loading ? "Entrando..." : "Entrar"}
               </Text>
-            </Pressable>
+            </TouchableOpacity>
 
             <View
               style={{
@@ -182,7 +200,7 @@ export default function LoginScreen() {
               >
                 Não tem uma conta?{" "}
               </Text>
-              <Pressable onPress={() => router.push("/cadastro")}>
+              <TouchableOpacity onPress={() => router.push("/cadastro")}>
                 <Text
                   {...androidFont}
                   style={{
@@ -195,11 +213,18 @@ export default function LoginScreen() {
                 >
                   Cadastre-se
                 </Text>
-              </Pressable>
+              </TouchableOpacity>
             </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+      <LadsModal
+        visible={!!erro}
+        title="Erro ao entrar"
+        message={erro ?? ''}
+        buttons={[{ text: 'OK', style: 'default', onPress: () => setErro(null) }]}
+        onRequestClose={() => setErro(null)}
+      />
     </LinearGradient>
   );
 }

@@ -1,11 +1,11 @@
 import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
 import { Image, Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ForumBottomNav, FORUM_BOTTOM_NAV_ROW_HEIGHT } from '@/components/forum/ForumBottomNav';
 import { LadsTopBar } from '@/components/lads/LadsTopBar';
+import { useAuth } from '@/context/AuthContext';
 
 const PAGE_BG = '#F9FAFB';
 const HEADER_PURPLE = '#432DD7';
@@ -123,7 +123,6 @@ const sectionIconSlot = {
 
 function EventoCard({ evento }: { evento: (typeof EVENTOS)[number] }) {
   const router = useRouter();
-  const [inscrito, setInscrito] = useState(false);
 
   return (
     <View
@@ -173,33 +172,6 @@ function EventoCard({ evento }: { evento: (typeof EVENTOS)[number] }) {
         </Text>
       </View>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, alignSelf: 'stretch' }}>
-        <Pressable
-          android_ripple={{ color: 'rgba(255,255,255,0.25)' }}
-          onPress={() => setInscrito((v) => !v)}
-          style={{
-            flex: 1,
-            minHeight: 36,
-            backgroundColor: inscrito ? '#FFFFFF' : CTA_PURPLE,
-            borderRadius: 10,
-            alignItems: 'center',
-            justifyContent: 'center',
-            borderWidth: inscrito ? 1 : 0,
-            borderColor: CTA_PURPLE,
-            flexDirection: 'row',
-            gap: 4,
-          }}>
-          {inscrito && <FontAwesome name="check" size={11} color={CTA_PURPLE} />}
-          <Text
-            style={{
-              fontFamily: 'Inter_600SemiBold',
-              fontSize: 12,
-              lineHeight: 16,
-              color: inscrito ? CTA_PURPLE : '#FFFFFF',
-              ...(Platform.OS === 'android' ? { includeFontPadding: false as const } : {}),
-            }}>
-            {inscrito ? 'Inscrito' : 'Inscrever'}
-          </Text>
-        </Pressable>
         <Pressable
           onPress={() => router.push({ pathname: '/evento-detalhe', params: { id: String(evento.id) } })}
           android_ripple={{ color: 'rgba(0,0,0,0.06)' }}
@@ -269,6 +241,8 @@ function NoticiaCard({ noticia }: { noticia: (typeof NOTICIAS)[number] }) {
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { user } = useAuth();
+  const firstName = user?.name?.split(' ')[0] ?? 'Usuário';
 
   const column448 = {
     width: '100%' as const,
@@ -318,7 +292,7 @@ export default function HomeScreen() {
             </View>
             <View style={{ flex: 1, minWidth: 0 }}>
               <Text style={greetingSub}>Olá, 👋</Text>
-              <Text style={greetingTitle}>Bem-vindo, João!</Text>
+              <Text style={greetingTitle}>Bem-vindo, {firstName}!</Text>
               <Text style={[greetingSub, { marginTop: 4 }]}>Laboratório de Aplicações e Desenvolvimento de Software</Text>
             </View>
           </View>

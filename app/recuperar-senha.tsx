@@ -10,6 +10,7 @@ import {
   ScrollView,
   Text,
   TextInput,
+  TouchableOpacity,
   View,
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
@@ -26,6 +27,7 @@ import {
   authFieldLabelStyle,
   authTextInputStyle,
 } from '@/constants/authScreenTheme';
+import { useAuth } from '@/context/AuthContext';
 
 /**
  * Envelope em traço (viewBox 24×24) — componente **inline** neste ficheiro para o Metro
@@ -62,10 +64,25 @@ function EnvelopeOutlineIcon({
 export default function RecuperarSenhaScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { forgotPassword } = useAuth();
   const [email, setEmail] = useState('');
   const [enviado, setEnviado] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const androidFont = authAndroidFont();
+
+  async function handleEnviar() {
+    if (!email.trim()) return;
+    setLoading(true);
+    try {
+      await forgotPassword(email.trim());
+    } catch {
+      // show success even on error for security reasons
+    } finally {
+      setLoading(false);
+      setEnviado(true);
+    }
+  }
 
   const cardShell = {
     backgroundColor: '#FFFFFF',
@@ -144,32 +161,27 @@ export default function RecuperarSenhaScreen() {
               </Text>
             </View>
 
-            <Pressable
+            <TouchableOpacity
               onPress={() => router.replace('/login')}
-              android_ripple={{ color: 'rgba(255,255,255,0.25)' }}
-              style={({ pressed }) => ({
-                backgroundColor: AUTH_BTN_FILL,
-                borderWidth: 1,
-                borderColor: AUTH_BTN_BORDER,
+              activeOpacity={0.8}
+              style={{
+                backgroundColor: '#4139F6',
                 borderRadius: 10,
-                minHeight: 44,
+                height: 48,
                 alignItems: 'center',
                 justifyContent: 'center',
-                opacity: pressed ? 0.92 : 1,
-                ...authButtonShadow,
-              })}>
+              }}>
               <Text
                 {...androidFont}
                 style={{
                   fontFamily: 'Inter_600SemiBold',
                   color: '#FFFFFF',
                   fontSize: 14,
-                  lineHeight: 14,
                   letterSpacing: 0,
                 }}>
                 Voltar para o login
               </Text>
-            </Pressable>
+            </TouchableOpacity>
 
             <Text
               {...androidFont}
@@ -258,20 +270,17 @@ export default function RecuperarSenhaScreen() {
               style={{ ...authTextInputStyle, marginBottom: 24 }}
             />
 
-            <Pressable
-              onPress={() => setEnviado(true)}
-              android_ripple={{ color: 'rgba(255,255,255,0.25)' }}
-              style={({ pressed }) => ({
-                backgroundColor: AUTH_BTN_FILL,
-                borderWidth: 1,
-                borderColor: AUTH_BTN_BORDER,
+            <TouchableOpacity
+              onPress={handleEnviar}
+              disabled={loading}
+              activeOpacity={0.75}
+              style={{
+                backgroundColor: '#4139F6',
                 borderRadius: 10,
-                minHeight: 44,
+                height: 48,
                 alignItems: 'center',
                 justifyContent: 'center',
-                opacity: pressed ? 0.92 : 1,
-                ...authButtonShadow,
-              })}>
+              }}>
               <Text
                 {...androidFont}
                 style={{
@@ -279,9 +288,9 @@ export default function RecuperarSenhaScreen() {
                   color: '#FFFFFF',
                   fontSize: 15,
                 }}>
-                Enviar link de redefinição
+                {loading ? 'Enviando...' : 'Enviar link de redefinição'}
               </Text>
-            </Pressable>
+            </TouchableOpacity>
 
             <Pressable
               onPress={() => router.replace('/login')}

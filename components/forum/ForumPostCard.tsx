@@ -1,6 +1,7 @@
+import { FontAwesome } from '@expo/vector-icons';
 import { Image, Platform, Pressable, Text, View } from 'react-native';
 
-import type { ForumPost } from '@/types/forum';
+import type { ForumPost, ForumReply } from '@/types/forum';
 import { bundledImageSource } from '@/utils/bundledImageSource';
 
 import { ForumCommentIcon12 } from './ForumCommentIcon12';
@@ -10,6 +11,7 @@ import { ForumThumbsUpIcon12 } from './ForumThumbsUpIcon12';
 export interface ForumPostCardProps {
   post: ForumPost;
   onPress?: () => void;
+  onDelete?: () => void;
 }
 
 const CARD_SHADOW_WEB = {
@@ -131,7 +133,7 @@ function ForumPostCardIcon({ kind }: { kind: ForumPost['icon'] }) {
   );
 }
 
-export function ForumPostCard({ post, onPress }: ForumPostCardProps) {
+export function ForumPostCard({ post, onPress, onDelete }: ForumPostCardProps) {
   const cardShadow = Platform.OS === 'web' ? CARD_SHADOW_WEB : CARD_SHADOW_NATIVE;
 
   /**
@@ -276,19 +278,65 @@ export function ForumPostCard({ post, onPress }: ForumPostCardProps) {
           </View>
         </View>
       </View>
-        <View
-          style={{
-            width: 16,
-            height: 16,
-            marginTop: FORUM_POST_CHEVRON_MARGIN_TOP,
-            marginLeft: FORUM_POST_TEXT_TO_CHEVRON,
-            flexShrink: 0,
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}>
-          <ForumPostChevronVector16 />
+        <View style={{ flexShrink: 0, marginLeft: FORUM_POST_TEXT_TO_CHEVRON, alignItems: 'center', gap: 8 }}>
+          <View style={{ width: 16, height: 16, marginTop: FORUM_POST_CHEVRON_MARGIN_TOP, alignItems: 'center', justifyContent: 'center' }}>
+            <ForumPostChevronVector16 />
+          </View>
+          {onDelete && (
+            <Pressable
+              onPress={(e) => { e.stopPropagation?.(); onDelete(); }}
+              hitSlop={8}
+              style={{ width: 24, height: 24, alignItems: 'center', justifyContent: 'center' }}>
+              <FontAwesome name="trash-o" size={14} color="#EF4444" />
+            </Pressable>
+          )}
         </View>
       </View>
+
+      {post.replies && post.replies.length > 0 && (
+        <View style={{ width: '100%', marginTop: 4 }}>
+          <View style={{ height: 1, backgroundColor: '#F3F4F6', marginHorizontal: 12 }} />
+          {post.replies.map((reply: ForumReply) => (
+            <View key={reply.id} style={{ paddingHorizontal: 12, paddingTop: 8 }}>
+              <Text
+                {...(Platform.OS === 'android' ? { includeFontPadding: false } : {})}
+                style={{
+                  fontFamily: 'Inter_600SemiBold',
+                  fontSize: 12,
+                  lineHeight: 16,
+                  color: reply.isLads ? '#432DD7' : '#1E2939',
+                }}>
+                {reply.author}
+              </Text>
+              <Text
+                {...(Platform.OS === 'android' ? { includeFontPadding: false } : {})}
+                style={{
+                  fontFamily: 'Inter_400Regular',
+                  fontSize: 12,
+                  lineHeight: 16,
+                  color: '#4B5563',
+                  marginTop: 1,
+                }}>
+                {reply.text}
+              </Text>
+            </View>
+          ))}
+          <Pressable
+            style={{ paddingHorizontal: 12, paddingTop: 8, paddingBottom: 4 }}
+            onPress={onPress}>
+            <Text
+              {...(Platform.OS === 'android' ? { includeFontPadding: false } : {})}
+              style={{
+                fontFamily: 'Inter_500Medium',
+                fontSize: 12,
+                lineHeight: 16,
+                color: '#432DD7',
+              }}>
+              Ver todas as respostas ({post.comments}) →
+            </Text>
+          </Pressable>
+        </View>
+      )}
     </View>
   );
 
