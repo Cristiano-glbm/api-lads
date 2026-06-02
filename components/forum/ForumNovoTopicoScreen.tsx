@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
+  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -18,6 +19,7 @@ import * as forumService from '@/services/forumService';
 
 import { ForumBackArrowIcon20 } from './ForumBackArrowIcon20';
 import { ForumBottomNav, FORUM_BOTTOM_NAV_ROW_HEIGHT } from './ForumBottomNav';
+import { MentionTextInput } from './MentionTextInput';
 import { LinearGradient } from 'expo-linear-gradient';
 
 const MAX_WIDTH = 448;
@@ -101,6 +103,7 @@ export function ForumNovoTopicoScreen() {
   const [urgente, setUrgente] = useState(false);
   const [apenasMemb, setApenasMemb] = useState(false);
   const [showCatPicker, setShowCatPicker] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   const cardShadow = Platform.OS === 'web' ? CARD_SHADOW_WEB : CARD_SHADOW_NATIVE;
   const scrollBottomPad = 20 + FORUM_BOTTOM_NAV_ROW_HEIGHT + Math.max(insets.bottom, 0);
@@ -159,7 +162,8 @@ export function ForumNovoTopicoScreen() {
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        behavior="padding"
+        keyboardVerticalOffset={Platform.OS === 'android' ? 0 : 0}>
         <ScrollView
           style={{ flex: 1, width: '100%', maxWidth: MAX_WIDTH, alignSelf: 'center' }}
           contentContainerStyle={{ padding: 16, gap: 16, paddingBottom: scrollBottomPad }}
@@ -240,7 +244,7 @@ export function ForumNovoTopicoScreen() {
               <Text {...androidNoPad} style={{ fontFamily: 'Inter_600SemiBold', fontSize: 13, lineHeight: 18, color: '#374151', marginBottom: 6 }}>
                 Descrição:
               </Text>
-              <TextInput
+              <MentionTextInput
                 value={descricao}
                 onChangeText={setDescricao}
                 placeholder="Descreva seu tópico em detalhes..."
@@ -248,7 +252,7 @@ export function ForumNovoTopicoScreen() {
                 multiline
                 numberOfLines={5}
                 textAlignVertical="top"
-                style={{
+                inputStyle={{
                   borderWidth: 1,
                   borderColor: '#E5E7EB',
                   borderRadius: 8,
@@ -318,12 +322,18 @@ export function ForumNovoTopicoScreen() {
                 <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 14, color: '#374151' }}>✕  Cancelar</Text>
               </Pressable>
               <Pressable
-                disabled={!podePubulicar}
+                disabled={!podePubulicar || submitting}
                 onPress={async () => {
+                  if (submitting) return;
+                  setSubmitting(true);
                   try {
                     await forumService.createPost({ title: titulo, content: descricao, tag: categoria });
-                  } catch { /* navigate anyway */ }
-                  router.back();
+                    router.back();
+                  } catch {
+                    // stay on screen so user can retry
+                  } finally {
+                    setSubmitting(false);
+                  }
                 }}
                 style={({ pressed }) => ({
                   flex: 1,
@@ -334,9 +344,12 @@ export function ForumNovoTopicoScreen() {
                   flexDirection: 'row',
                   gap: 6,
                   backgroundColor: podePubulicar ? '#432DD7' : '#E5E7EB',
-                  opacity: pressed ? 0.88 : 1,
+                  opacity: pressed && !submitting ? 0.88 : 1,
                 })}>
-                <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 14, color: podePubulicar ? '#FFFFFF' : '#9CA3AF' }}>✓  Publicar</Text>
+                {submitting
+                  ? <ActivityIndicator size="small" color="#FFFFFF" />
+                  : <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 14, color: podePubulicar ? '#FFFFFF' : '#9CA3AF' }}>✓  Publicar</Text>
+                }
               </Pressable>
             </View>
           </View>

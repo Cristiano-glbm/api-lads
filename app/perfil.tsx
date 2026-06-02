@@ -503,20 +503,20 @@ export default function PerfilScreen() {
                   <Pressable
                     accessibilityRole="button"
                     onPress={handleSettingPress}
-                    android_ripple={{ color: 'rgba(0,0,0,0.04)' }}
                     style={({ pressed }) => ({
                       flexDirection: 'row',
                       alignItems: 'center',
                       minHeight: SETTINGS_ROW_MIN_H,
                       paddingVertical: 12,
+                      paddingHorizontal: 4,
                       width: '100%',
-                      backgroundColor: pressed ? SETTINGS_ROW_SEPARATOR : 'transparent',
+                      backgroundColor: pressed ? '#F3F4F6' : 'transparent',
                       borderRadius: 10,
                     })}>
-                    <View style={{ width: SETTINGS_ICON_SLOT, height: SETTINGS_ICON_SLOT, borderRadius: SETTINGS_ICON_SLOT / 2, backgroundColor: item.iconBg, alignItems: 'center', justifyContent: 'center' }}>
+                    <View style={{ width: SETTINGS_ICON_SLOT, height: SETTINGS_ICON_SLOT, borderRadius: SETTINGS_ICON_SLOT / 2, backgroundColor: item.iconBg, alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                       <Ionicons name={item.ion} size={20} color={item.iconColor} />
                     </View>
-                    <View collapsable={false} style={{ flex: 1, minWidth: 0, marginLeft: SETTINGS_ICON_TEXT_GAP }}>
+                    <View style={{ flex: 1, marginLeft: SETTINGS_ICON_TEXT_GAP }}>
                       <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 15, lineHeight: 22, color: item.red ? '#EF4444' : '#111827', ...(Platform.OS === 'android' ? { includeFontPadding: false } : {}) }}>
                         {item.title}
                       </Text>

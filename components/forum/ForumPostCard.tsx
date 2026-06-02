@@ -11,6 +11,7 @@ import { ForumThumbsUpIcon12 } from './ForumThumbsUpIcon12';
 export interface ForumPostCardProps {
   post: ForumPost;
   onPress?: () => void;
+  onPressAuthor?: () => void;
   onDelete?: () => void;
 }
 
@@ -133,7 +134,7 @@ function ForumPostCardIcon({ kind }: { kind: ForumPost['icon'] }) {
   );
 }
 
-export function ForumPostCard({ post, onPress, onDelete }: ForumPostCardProps) {
+export function ForumPostCard({ post, onPress, onPressAuthor, onDelete }: ForumPostCardProps) {
   const cardShadow = Platform.OS === 'web' ? CARD_SHADOW_WEB : CARD_SHADOW_NATIVE;
 
   /**
@@ -205,20 +206,30 @@ export function ForumPostCard({ post, onPress, onDelete }: ForumPostCardProps) {
           }}>
           {post.title}
         </Text>
-        <Text
-          {...(Platform.OS === 'android' ? { includeFontPadding: false } : {})}
-          style={{
+        <Pressable
+          onPress={onPressAuthor}
+          disabled={!onPressAuthor}
+          hitSlop={8}
+          style={({ pressed }) => ({
             marginTop: FORUM_POST_TITLE_AUTHOR_GAP,
-            color: FORUM_POST_AUTHOR_COLOR,
-            fontFamily: 'Inter_500Medium',
-            fontSize: 12,
-            fontStyle: 'normal',
-            fontWeight: '500',
-            letterSpacing: 0,
-            lineHeight: FORUM_POST_AUTHOR_LINE_HEIGHT,
-          }}>
-          por {post.author}
-        </Text>
+            opacity: pressed && onPressAuthor ? 0.6 : 1,
+            alignSelf: 'flex-start',
+          })}>
+          <Text
+            {...(Platform.OS === 'android' ? { includeFontPadding: false } : {})}
+            style={{
+              color: onPressAuthor ? '#432DD7' : FORUM_POST_AUTHOR_COLOR,
+              fontFamily: 'Inter_500Medium',
+              fontSize: 12,
+              fontStyle: 'normal',
+              fontWeight: '500',
+              letterSpacing: 0,
+              lineHeight: FORUM_POST_AUTHOR_LINE_HEIGHT,
+              textDecorationLine: onPressAuthor ? 'underline' : 'none',
+            }}>
+            por {post.author}
+          </Text>
+        </Pressable>
         <View
           style={{
             marginTop: FORUM_POST_STATS_GAP,

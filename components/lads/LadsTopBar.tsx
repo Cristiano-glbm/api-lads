@@ -121,31 +121,26 @@ const FIGMA_PERFIL_GEAR_HIT = {
 } as const;
 
 /**
- * Inspect Figma (Container logo + “LADS”):
- * `display: flex; width: 80.8px; height: 32px; align-items: center; gap: 8px;`
+ * Container logo + "LADS" — flexible width so the wordmark is never clipped on any device.
  */
 const FIGMA_SERVICOS_LOGO_WORDMARK_ROW = {
   display: 'flex' as const,
   flexDirection: 'row' as const,
-  width: 80.8,
   height: 32,
   alignItems: 'center' as const,
   gap: 8,
+  flexShrink: 0 as const,
 };
 
 /**
- * Inspect Figma (Text “LADS” / container fill):
- * `display: flex; height: 20px; align-items: flex-start; flex: 1 0 0;`
+ * Container do wordmark "LADS" — sem largura mínima fixa para não cortar o texto.
  */
 const LADS_WORDMARK_CONTAINER_SERVICOS = {
   display: 'flex' as const,
   flexDirection: 'row' as const,
   height: 20,
-  alignItems: 'flex-start' as const,
-  flexGrow: 1,
-  flexShrink: 0,
-  flexBasis: 0,
-  minWidth: 0,
+  alignItems: 'center' as const,
+  flexShrink: 0 as const,
 } as const;
 
 /**

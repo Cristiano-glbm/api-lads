@@ -504,27 +504,29 @@ export default function EventosRoute() {
             <View style={{ flexDirection: 'row', gap: 4 }}>
               <Pressable
                 onPress={prevMonth}
+                hitSlop={8}
                 style={({ pressed }) => ({
-                  width: 32,
-                  height: 32,
-                  borderRadius: 8,
+                  width: 44,
+                  height: 44,
+                  borderRadius: 10,
                   backgroundColor: pressed ? '#3730A3' : 'rgba(255,255,255,0.15)',
                   alignItems: 'center',
                   justifyContent: 'center',
                 })}>
-                <FontAwesome name="chevron-left" size={13} color="#fff" />
+                <FontAwesome name="chevron-left" size={16} color="#fff" />
               </Pressable>
               <Pressable
                 onPress={nextMonth}
+                hitSlop={8}
                 style={({ pressed }) => ({
-                  width: 32,
-                  height: 32,
-                  borderRadius: 8,
+                  width: 44,
+                  height: 44,
+                  borderRadius: 10,
                   backgroundColor: pressed ? '#3730A3' : 'rgba(255,255,255,0.15)',
                   alignItems: 'center',
                   justifyContent: 'center',
                 })}>
-                <FontAwesome name="chevron-right" size={13} color="#fff" />
+                <FontAwesome name="chevron-right" size={16} color="#fff" />
               </Pressable>
             </View>
           </View>

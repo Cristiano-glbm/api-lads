@@ -57,6 +57,7 @@ function Field({
   editable = true,
   secureTextEntry,
   rightIcon,
+  helperText,
 }: {
   label: string;
   value: string;
@@ -67,6 +68,7 @@ function Field({
   editable?: boolean;
   secureTextEntry?: boolean;
   rightIcon?: React.ReactNode;
+  helperText?: string;
 }) {
   return (
     <View style={{ marginBottom: 12 }}>
@@ -107,6 +109,11 @@ function Field({
           </View>
         )}
       </View>
+      {helperText ? (
+        <Text {...androidNoPad} style={{ fontFamily: 'Inter_400Regular', fontSize: 12, color: '#9CA3AF', marginTop: 4 }}>
+          {helperText}
+        </Text>
+      ) : null}
     </View>
   );
 }
@@ -332,7 +339,7 @@ export function EditarPerfilScreen() {
       </View>
 
       {/* ── Formulário ── */}
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
         <ScrollView
           style={{ flex: 1 }}
           contentContainerStyle={{
@@ -364,6 +371,10 @@ export function EditarPerfilScreen() {
               onChangeText={() => {}}
               editable={false}
               keyboardType="email-address"
+              rightIcon={
+                <Ionicons name="lock-closed-outline" size={18} color="#9CA3AF" />
+              }
+              helperText="O e-mail não pode ser alterado"
             />
             <Field
               label="Telefone"

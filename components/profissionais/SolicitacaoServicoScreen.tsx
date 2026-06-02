@@ -121,6 +121,16 @@ const LABEL_STYLE = {
   marginBottom: 6,
 } as const;
 
+function isValidDate(dateStr: string): boolean {
+  if (!/^\d{2}\/\d{2}\/\d{4}$/.test(dateStr)) return false;
+  const [day, month, year] = dateStr.split('/').map(Number);
+  if (day < 1 || day > 31) return false;
+  if (month < 1 || month > 12) return false;
+  if (year < 2020 || year > 2099) return false;
+  const d = new Date(year, month - 1, day);
+  return d.getDate() === day && d.getMonth() === month - 1 && d.getFullYear() === year;
+}
+
 export function SolicitacaoServicoScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -130,6 +140,7 @@ export function SolicitacaoServicoScreen() {
   const [descricao, setDescricao] = useState('');
   const [orcamento, setOrcamento] = useState('');
   const [prazo, setPrazo] = useState('');
+  const [prazoError, setPrazoError] = useState('');
   const [showCatPicker, setShowCatPicker] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showAnexoModal, setShowAnexoModal] = useState(false);
@@ -139,6 +150,11 @@ export function SolicitacaoServicoScreen() {
   const podeSalvar = titulo.trim().length > 0;
 
   async function handleSalvar() {
+    if (prazo.length > 0 && !isValidDate(prazo)) {
+      setPrazoError('Data inválida. Use o formato dd/mm/aaaa.');
+      return;
+    }
+    setPrazoError('');
     try {
       await servicesService.createRequest({
         title: titulo,
@@ -185,7 +201,7 @@ export function SolicitacaoServicoScreen() {
         </View>
       </View>
 
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
         <ScrollView
           style={{ flex: 1, width: '100%', maxWidth: 448, alignSelf: 'center' }}
           contentContainerStyle={{ padding: 16, gap: 16, paddingBottom: scrollBottomPad }}
@@ -299,13 +315,21 @@ export function SolicitacaoServicoScreen() {
               <Text {...androidNoPad} style={LABEL_STYLE}>Prazo:</Text>
               <TextInput
                 value={prazo}
-                onChangeText={(text) => setPrazo(formatDate(text))}
+                onChangeText={(text) => {
+                  setPrazoError('');
+                  setPrazo(formatDate(text));
+                }}
                 placeholder="dd/mm/aaaa"
                 placeholderTextColor="#9CA3AF"
                 keyboardType="numeric"
                 maxLength={10}
-                style={FIELD_STYLE}
+                style={[FIELD_STYLE, prazoError ? { borderColor: '#EF4444' } : undefined]}
               />
+              {prazoError ? (
+                <Text {...androidNoPad} style={{ fontFamily: 'Inter_400Regular', fontSize: 12, color: '#EF4444', marginTop: 4 }}>
+                  {prazoError}
+                </Text>
+              ) : null}
             </View>
 
             {/* Anexo */}

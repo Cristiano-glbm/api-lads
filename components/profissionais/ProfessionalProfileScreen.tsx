@@ -1,10 +1,11 @@
 import { FontAwesome, Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Image, Linking, Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { PROFESSIONAL_CARLOS } from '@/constants/professionalsMock';
+import * as professionalsService from '@/services/professionalsService';
 import type { ProfessionalProfile } from '@/types/professional';
 import { ForumBottomNav } from '../forum/ForumBottomNav';
 import { LadsModal, type LadsModalButton } from '../lads/LadsModal';
@@ -89,9 +90,38 @@ export function ProfessionalProfileScreen({
 }: ProfessionalProfileScreenProps) {
   const insets = useSafeAreaInsets();
   const [seguindo, setSeguindo] = useState(false);
+  const [followersCount, setFollowersCount] = useState(professional.followers ?? 0);
+  const [followLoading, setFollowLoading] = useState(false);
   const [modal, setModal] = useState<{ visible: boolean; title: string; message: string; buttons: LadsModalButton[] }>({
     visible: false, title: '', message: '', buttons: [],
   });
+
+  useEffect(() => {
+    if (!professional.id) return;
+    professionalsService.getFollowStatus(professional.id)
+      .then(({ following, followersCount: count }) => {
+        setSeguindo(following);
+        setFollowersCount(count);
+      })
+      .catch(() => { /* use defaults */ });
+  }, [professional.id]);
+
+  async function handleSeguir() {
+    if (followLoading || !professional.id) return;
+    if (onPressSeguir) { onPressSeguir(); return; }
+    setFollowLoading(true);
+    try {
+      const result = seguindo
+        ? await professionalsService.unfollowProfessional(professional.id)
+        : await professionalsService.followProfessional(professional.id);
+      setSeguindo(result.following);
+      setFollowersCount(result.followersCount);
+    } catch {
+      setSeguindo((v) => !v);
+    } finally {
+      setFollowLoading(false);
+    }
+  }
   function closeModal() { setModal((m) => ({ ...m, visible: false })); }
   function showModal(title: string, message: string, buttons: LadsModalButton[]) {
     setModal({ visible: true, title, message, buttons });
@@ -235,7 +265,7 @@ export function ProfessionalProfileScreen({
           </View>
           <View className="mt-2 flex-row items-center" style={{ gap: 6 }}>
             <Ionicons name="people-outline" size={16} color="rgba(255,255,255,0.92)" />
-            <Text className="text-sm text-white/90">{professional.followers} seguidores</Text>
+            <Text className="text-sm text-white/90">{followersCount} seguidores</Text>
           </View>
         </View>
       </LinearGradient>
@@ -353,7 +383,8 @@ export function ProfessionalProfileScreen({
             <Text className="mt-1 text-center text-[11px] font-bold text-white">Solicitar Serviço</Text>
           </Pressable>
           <Pressable
-            onPress={onPressSeguir ?? (() => setSeguindo((v) => !v))}
+            onPress={handleSeguir}
+            disabled={followLoading}
             className="min-w-0 flex-1 items-center py-3 active:opacity-80"
             style={{
               borderRadius: ACTION_BTN_R,
@@ -361,6 +392,7 @@ export function ProfessionalProfileScreen({
               borderWidth: 2,
               borderColor: '#4F39F6',
               backgroundColor: seguindo ? '#4F39F6' : '#FFFFFF',
+              opacity: followLoading ? 0.6 : 1,
             }}>
             <FontAwesome name={seguindo ? 'check' : 'user-plus'} size={16} color={seguindo ? '#FFFFFF' : '#4F39F6'} />
             <Text className="mt-1 text-center text-[11px] font-bold" style={{ color: seguindo ? '#FFFFFF' : '#4F39F6' }}>

@@ -81,11 +81,12 @@ export async function getComments(postId: string): Promise<ApiForumComment[]> {
 }
 
 export async function addComment(postId: string, content: string): Promise<ApiForumComment> {
-  const res = await api.post<{ success: boolean; data: { comment: ApiForumComment } }>(
+  // Backend returns R.created(res, comment) → { success, data: <comment> } (not nested under .comment)
+  const res = await api.post<{ success: boolean; data: ApiForumComment }>(
     `/api/forum/posts/${postId}/comments`,
     { content }
   );
-  return res.data.comment;
+  return res.data;
 }
 
 export async function deleteComment(id: string): Promise<void> {

@@ -36,3 +36,23 @@ export async function getProfessional(id: string): Promise<ApiProfessional> {
   const res = await api.get<ProfessionalResponse>(`/api/professionals/${id}`);
   return res.data;
 }
+
+export interface FollowStatus {
+  following: boolean;
+  followersCount: number;
+}
+
+export async function getFollowStatus(professionalId: string): Promise<FollowStatus> {
+  const res = await api.get<{ success: boolean; data: FollowStatus }>(`/api/professionals/${professionalId}/follow`);
+  return res.data;
+}
+
+export async function followProfessional(professionalId: string): Promise<FollowStatus> {
+  const res = await api.post<{ success: boolean; data: FollowStatus }>(`/api/professionals/${professionalId}/follow`, {});
+  return res.data;
+}
+
+export async function unfollowProfessional(professionalId: string): Promise<FollowStatus> {
+  const res = await api.delete<{ success: boolean; data: FollowStatus }>(`/api/professionals/${professionalId}/follow`);
+  return res.data;
+}

@@ -273,6 +273,7 @@ export function ForumHomeScreen() {
                   key={post.id}
                   post={post}
                   onPress={() => router.push(`/forum-post?id=${post.id}`)}
+                  onPressAuthor={post.authorId ? () => router.push(`/perfil-profissional?id=${post.authorId}`) : undefined}
                   onDelete={post.authorId === user?.id ? () => setDeleteTargetId(post.id) : undefined}
                 />
               ))

@@ -1,13 +1,24 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { Platform, Pressable, ScrollView, Text, View } from 'react-native';
+import { useRef, useState } from 'react';
+import {
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { FORUM_HOME_HEADER } from '@/constants/forumMock';
+import * as forumService from '@/services/forumService';
 import type { ForumPost, ForumReply } from '@/types/forum';
 
 import { ForumBackArrowIcon20 } from './ForumBackArrowIcon20';
-import { ForumBottomNav, FORUM_BOTTOM_NAV_ROW_HEIGHT } from './ForumBottomNav';
+import { ForumBottomNav } from './ForumBottomNav';
+import { MentionTextInput } from './MentionTextInput';
 
 const MAX_WIDTH = 448;
 
@@ -58,6 +69,24 @@ function AuthorAvatar({ name }: { name: string }) {
   );
 }
 
+/** Renderiza texto com @menções destacadas em roxo */
+function TextWithMentions({ text, style }: { text: string; style?: object }) {
+  const parts = text.split(/(@\S+)/g);
+  return (
+    <Text {...androidNoPad} style={style}>
+      {parts.map((part, i) =>
+        part.startsWith('@') ? (
+          <Text key={i} style={{ color: '#432DD7', fontFamily: 'Inter_600SemiBold' }}>
+            {part}
+          </Text>
+        ) : (
+          <Text key={i}>{part}</Text>
+        ),
+      )}
+    </Text>
+  );
+}
+
 export interface ForumPostDetailScreenProps {
   post: ForumPost;
 }
@@ -65,12 +94,40 @@ export interface ForumPostDetailScreenProps {
 export function ForumPostDetailScreen({ post }: ForumPostDetailScreenProps) {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const scrollRef = useRef<ScrollView>(null);
+
+  const [replies, setReplies] = useState<ForumReply[]>(post.replies ?? []);
+  const [commentText, setCommentText] = useState('');
+  const [sending, setSending] = useState(false);
 
   const cardShadow = Platform.OS === 'web' ? CARD_SHADOW_WEB : CARD_SHADOW_NATIVE;
-  const scrollBottomPad = 20 + FORUM_BOTTOM_NAV_ROW_HEIGHT + Math.max(insets.bottom, 0);
+  const scrollBottomPad = 16;
+
+  async function handleSendComment() {
+    const content = commentText.trim();
+    if (!content || sending) return;
+    setSending(true);
+    try {
+      const newComment = await forumService.addComment(post.id, content);
+      setReplies((prev) => [
+        ...prev,
+        {
+          id: newComment.id ?? String(Date.now()),
+          author: newComment.author?.name ?? 'Você',
+          text: content,
+        },
+      ]);
+      setCommentText('');
+      setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
+    } catch {
+      /* keep text, let user retry */
+    } finally {
+      setSending(false);
+    }
+  }
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#F3F4F6' }}>
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: '#F3F4F6' }} behavior="padding">
       {/* Cabeçalho: barra escura + faixa roxa com título do post */}
       <View style={{ width: '100%', maxWidth: MAX_WIDTH, alignSelf: 'center', paddingTop: insets.top }}>
         {/* Barra superior escura */}
@@ -123,8 +180,10 @@ export function ForumPostDetailScreen({ post }: ForumPostDetailScreenProps) {
 
       {/* Conteúdo rolável */}
       <ScrollView
+        ref={scrollRef}
         style={{ flex: 1, width: '100%', maxWidth: MAX_WIDTH, alignSelf: 'center' }}
         contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: scrollBottomPad }}
+        keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}>
 
         {/* Card do post (título, avatar, data e corpo) */}
@@ -167,21 +226,20 @@ export function ForumPostDetailScreen({ post }: ForumPostDetailScreenProps) {
 
           {/* Corpo do post */}
           {post.body ? (
-            <Text
-              {...androidNoPad}
+            <TextWithMentions
+              text={post.body}
               style={{
                 fontFamily: 'Inter_400Regular',
                 fontSize: 14,
                 lineHeight: 21,
                 color: '#1E2939',
-              }}>
-              {post.body}
-            </Text>
+              }}
+            />
           ) : null}
         </View>
 
         {/* Seção de comentários */}
-        {post.replies && post.replies.length > 0 ? (
+        {replies.length > 0 ? (
           <View>
             <Text
               {...androidNoPad}
@@ -192,10 +250,10 @@ export function ForumPostDetailScreen({ post }: ForumPostDetailScreenProps) {
                 color: '#1E2939',
                 marginBottom: 8,
               }}>
-              Comentarios
+              Comentários ({replies.length})
             </Text>
 
-            {post.replies.map((reply: ForumReply) => (
+            {replies.map((reply: ForumReply) => (
               <View
                 key={reply.id}
                 style={{
@@ -218,36 +276,85 @@ export function ForumPostDetailScreen({ post }: ForumPostDetailScreenProps) {
                   }}>
                   {reply.author}
                 </Text>
-                <Text
-                  {...androidNoPad}
+                <TextWithMentions
+                  text={reply.text}
                   style={{
                     fontFamily: 'Inter_400Regular',
                     fontSize: 13,
                     lineHeight: 18,
                     color: '#4B5563',
-                  }}>
-                  {reply.text}
-                </Text>
+                  }}
+                />
               </View>
             ))}
-
-            <Pressable style={{ paddingVertical: 8, alignItems: 'center' }}>
-              <Text
-                {...androidNoPad}
-                style={{
-                  fontFamily: 'Inter_500Medium',
-                  fontSize: 13,
-                  lineHeight: 18,
-                  color: '#432DD7',
-                }}>
-                Ver todas as respostas ({post.comments}) →
-              </Text>
-            </Pressable>
           </View>
         ) : null}
       </ScrollView>
 
+      {/* Barra de comentário fixa na parte inferior */}
+      <View
+        style={{
+          width: '100%',
+          maxWidth: MAX_WIDTH,
+          alignSelf: 'center',
+          backgroundColor: '#FFFFFF',
+          borderTopWidth: 1,
+          borderTopColor: '#E5E7EB',
+          paddingHorizontal: 12,
+          paddingVertical: 10,
+          paddingBottom: Math.max(insets.bottom, 10),
+          flexDirection: 'row',
+          alignItems: 'flex-end',
+          gap: 8,
+          zIndex: 10,
+        }}>
+        <MentionTextInput
+          value={commentText}
+          onChangeText={setCommentText}
+          placeholder="Comentar… use @ para mencionar"
+          placeholderTextColor="#9CA3AF"
+          multiline
+          maxLength={1000}
+          inputStyle={{
+            flex: 1,
+            minHeight: 40,
+            maxHeight: 100,
+            borderWidth: 1,
+            borderColor: '#E5E7EB',
+            borderRadius: 20,
+            paddingHorizontal: 14,
+            paddingVertical: 10,
+            fontFamily: 'Inter_400Regular',
+            fontSize: 14,
+            color: '#1E2939',
+            backgroundColor: '#F9FAFB',
+            ...(Platform.OS === 'android' ? { includeFontPadding: false } : {}),
+          }}
+          style={{ flex: 1 }}
+        />
+        <Pressable
+          onPress={handleSendComment}
+          disabled={!commentText.trim() || sending}
+          style={({ pressed }) => ({
+            width: 40,
+            height: 40,
+            borderRadius: 20,
+            backgroundColor: commentText.trim() && !sending ? '#432DD7' : '#E5E7EB',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+            opacity: pressed ? 0.8 : 1,
+          })}>
+          {sending
+            ? <ActivityIndicator size="small" color="#432DD7" />
+            : (
+              <Text {...androidNoPad} style={{ color: '#FFFFFF', fontSize: 18, lineHeight: 20 }}>↑</Text>
+            )
+          }
+        </Pressable>
+      </View>
+
       <ForumBottomNav active="forum" />
-    </View>
+    </KeyboardAvoidingView>
   );
 }

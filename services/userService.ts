@@ -29,3 +29,16 @@ export async function getMyStats(): Promise<Record<string, unknown>> {
 export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
   await api.patch('/api/users/me/password', { currentPassword, newPassword });
 }
+
+export interface UserSearchResult {
+  id: string;
+  name: string;
+  avatarUrl?: string;
+  role?: string;
+}
+
+export async function searchUsers(q: string): Promise<UserSearchResult[]> {
+  if (!q.trim()) return [];
+  const res = await api.get<{ success: boolean; data: UserSearchResult[] }>(`/api/users/search?q=${encodeURIComponent(q)}`);
+  return res.data;
+}
