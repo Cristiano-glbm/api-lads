@@ -2,7 +2,7 @@ import { Fragment, useCallback, useEffect, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ForumBottomNav } from '@/components/forum/ForumBottomNav';
@@ -15,8 +15,8 @@ import * as forumService from '@/services/forumService';
 // ─── Constantes Figma ────────────────────────────────────────────────────────
 
 /** Figma header: gradiente linear topo → base */
-const HEADER_GRADIENT_TOP = '#432DD7';
-const HEADER_GRADIENT_BOTTOM = '#8200DB';
+const HEADER_GRADIENT_TOP = '#0F172A';
+const HEADER_GRADIENT_BOTTOM = '#1E293B';
 /** Top bar: 56px (Inspect Figma); fundo sólido, separado do bloco gradiente */
 const HEADER_TOP_BAR_HEIGHT = 56;
 /** Área do perfil com gradiente (Inspect: ~260px de altura do container) */
@@ -216,8 +216,13 @@ export default function PerfilScreen() {
               justifyContent: 'center',
               borderWidth: 3,
               borderColor: '#fff',
+              overflow: 'hidden',
             }}>
-            <Ionicons name="person" size={40} color="#fff" />
+            {user?.avatarUrl ? (
+              <Image source={{ uri: user.avatarUrl }} style={{ width: 80, height: 80, borderRadius: 40 }} />
+            ) : (
+              <Ionicons name="person" size={40} color="#fff" />
+            )}
           </View>
 
           <Text

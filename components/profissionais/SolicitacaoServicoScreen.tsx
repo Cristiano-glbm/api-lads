@@ -1,8 +1,12 @@
 import { useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
 import * as servicesService from '@/services/servicesService';
+import * as ImagePicker from 'expo-image-picker';
 import {
+  ActionSheetIOS,
+  Alert,
   Animated,
+  Image,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -16,7 +20,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path, Polyline } from 'react-native-svg';
 
 import { ForumBottomNav, FORUM_BOTTOM_NAV_ROW_HEIGHT } from '@/components/forum/ForumBottomNav';
-import { LadsModal } from '@/components/lads/LadsModal';
 
 const ACCENT = '#4F39F6';
 
@@ -143,11 +146,51 @@ export function SolicitacaoServicoScreen() {
   const [prazoError, setPrazoError] = useState('');
   const [showCatPicker, setShowCatPicker] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
-  const [showAnexoModal, setShowAnexoModal] = useState(false);
+  const [anexoUri, setAnexoUri] = useState<string | null>(null);
+  const [anexoNome, setAnexoNome] = useState<string | null>(null);
   const toastOpacity = useRef(new Animated.Value(0)).current;
 
   const scrollBottomPad = 20 + FORUM_BOTTOM_NAV_ROW_HEIGHT + Math.max(insets.bottom, 0);
   const podeSalvar = titulo.trim().length > 0;
+
+  async function pickAnexo(source: 'gallery' | 'camera') {
+    let result: ImagePicker.ImagePickerResult;
+    if (source === 'camera') {
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permissão necessária', 'Precisamos de acesso à câmera.');
+        return;
+      }
+      result = await ImagePicker.launchCameraAsync({ mediaTypes: ['images'], quality: 0.7, base64: true });
+    } else {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permissão necessária', 'Precisamos de acesso à galeria.');
+        return;
+      }
+      result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.7, base64: true });
+    }
+    if (!result.canceled && result.assets[0]) {
+      const asset = result.assets[0];
+      setAnexoUri(asset.uri);
+      setAnexoNome(asset.fileName ?? `imagem_${Date.now()}.jpg`);
+    }
+  }
+
+  function handleEscolherAnexo() {
+    if (Platform.OS === 'ios') {
+      ActionSheetIOS.showActionSheetWithOptions(
+        { options: ['Cancelar', 'Câmera', 'Galeria'], cancelButtonIndex: 0 },
+        (idx) => { if (idx === 1) pickAnexo('camera'); else if (idx === 2) pickAnexo('gallery'); },
+      );
+    } else {
+      Alert.alert('Anexar imagem', 'Escolha uma opção', [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Câmera', onPress: () => pickAnexo('camera') },
+        { text: 'Galeria', onPress: () => pickAnexo('gallery') },
+      ]);
+    }
+  }
 
   async function handleSalvar() {
     if (prazo.length > 0 && !isValidDate(prazo)) {
@@ -162,6 +205,7 @@ export function SolicitacaoServicoScreen() {
         descricao,
         orcamento,
         prazo,
+        anexoUri: anexoUri ?? undefined,
       });
     } catch { /* show toast regardless */ }
     Animated.sequence([
@@ -335,21 +379,42 @@ export function SolicitacaoServicoScreen() {
             {/* Anexo */}
             <View>
               <Text {...androidNoPad} style={LABEL_STYLE}>Anexo</Text>
-              <Pressable
-                onPress={() => setShowAnexoModal(true)}
-                style={({ pressed }) => ({
-                  ...FIELD_STYLE,
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 8,
-                  opacity: pressed ? 0.8 : 1,
-                })}>
-                <FileIcon />
-                <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: '#6B7280' }}>
-                  Escolher arquivo
-                </Text>
-              </Pressable>
+              {anexoUri ? (
+                <View style={{ gap: 8 }}>
+                  <Image
+                    source={{ uri: anexoUri }}
+                    style={{ width: '100%', height: 160, borderRadius: 8, backgroundColor: '#F3F4F6' }}
+                    resizeMode="cover"
+                  />
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                    <Text
+                      {...androidNoPad}
+                      numberOfLines={1}
+                      style={{ flex: 1, fontFamily: 'Inter_400Regular', fontSize: 13, color: '#374151' }}>
+                      {anexoNome}
+                    </Text>
+                    <Pressable onPress={() => { setAnexoUri(null); setAnexoNome(null); }} hitSlop={8}>
+                      <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 13, color: '#EF4444' }}>Remover</Text>
+                    </Pressable>
+                  </View>
+                </View>
+              ) : (
+                <Pressable
+                  onPress={handleEscolherAnexo}
+                  style={({ pressed }) => ({
+                    ...FIELD_STYLE,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 8,
+                    opacity: pressed ? 0.8 : 1,
+                  })}>
+                  <FileIcon />
+                  <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: '#6B7280' }}>
+                    Escolher imagem
+                  </Text>
+                </Pressable>
+              )}
             </View>
 
             {/* Divisor */}
@@ -436,14 +501,6 @@ export function SolicitacaoServicoScreen() {
       </Animated.View>
 
       <ForumBottomNav active="profis" />
-
-      <LadsModal
-        visible={showAnexoModal}
-        title="Anexar arquivo"
-        message="Upload de arquivos será disponibilizado em breve."
-        onRequestClose={() => setShowAnexoModal(false)}
-        buttons={[{ text: 'OK', onPress: () => setShowAnexoModal(false) }]}
-      />
 
       <Modal
         visible={showCancelModal}

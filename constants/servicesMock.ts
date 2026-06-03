@@ -33,7 +33,7 @@ export const SERVICE_CATEGORIES: ServiceCategoryItem[] = [
     iconColor: '#7C3AED',
     /** Figma: Inter 500, 24/32, `#8200DB`, center — emoji 🤖 (ícone FA não replica o raster). */
     emoji: '🤖',
-    emojiColor: '#8200DB',
+    emojiColor: '#06B6D4',
   },
   {
     id: 'uiux',

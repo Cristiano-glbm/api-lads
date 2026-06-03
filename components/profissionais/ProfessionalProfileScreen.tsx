@@ -14,7 +14,7 @@ import { LadsModal, type LadsModalButton } from '../lads/LadsModal';
 const BAR_MAX_W = 448;
 const BAR_PAD_H = 16;
 const BAR_ROW_H = 56;
-const BAR_BG = '#432DD7';
+const BAR_BG = '#0F172A';
 
 /** Inspect (3.ª foto): `box-shadow: 0 1px 3px 0 rgba(0,0,0,0.1)` */
 const BAR_SHADOW_WEB = {
@@ -161,7 +161,7 @@ export function ProfessionalProfileScreen({
   return (
     <View className="flex-1 bg-forum-bg">
       <LinearGradient
-        colors={['#432DD7', '#8200DB']}
+        colors={['#0F172A', '#1E293B']}
         start={{ x: 0.5, y: 0 }}
         end={{ x: 0.5, y: 1 }}
         style={{
@@ -282,14 +282,14 @@ export function ProfessionalProfileScreen({
         showsVerticalScrollIndicator={false}>
         {/* Cartão EXPERTISE — mesmo padrão que os outros (Figma) */}
         <View style={cardStyle}>
-          <Text className="mb-3 text-sm font-bold uppercase tracking-wide text-forum-ink">🎯 EXPERTISE</Text>
+          <Text className="mb-3 text-sm font-bold uppercase tracking-wide text-gray-800">🎯 EXPERTISE</Text>
           <View className="flex-row flex-wrap" style={{ gap: 10 }}>
             {professional.expertise.map((tag) => (
               <View
                 key={tag}
                 className="rounded-full border px-4 py-2"
                 style={{ borderColor: '#C6D2FF', backgroundColor: 'rgba(163, 179, 255, 0.18)' }}>
-                <Text className="text-xs font-semibold" style={{ color: '#432DD7' }}>
+                <Text className="text-xs font-semibold" style={{ color: '#06B6D4' }}>
                   {tag}
                 </Text>
               </View>
@@ -298,18 +298,18 @@ export function ProfessionalProfileScreen({
         </View>
 
         <View style={cardStyle}>
-          <Text className="mb-3 text-sm font-bold uppercase tracking-wide text-forum-ink">🏆 CONQUISTAS</Text>
+          <Text className="mb-3 text-sm font-bold uppercase tracking-wide text-gray-800">🏆 CONQUISTAS</Text>
           {professional.achievements.map((line) => (
             <View key={line} className="mb-2 flex-row items-start">
               <FontAwesome name="check-circle" size={18} color="#22C55E" style={{ marginTop: 1 }} />
-              <Text className="ml-2 flex-1 text-sm leading-5 text-forum-ink">{line}</Text>
+              <Text className="ml-2 flex-1 text-sm leading-5 text-gray-700">{line}</Text>
             </View>
           ))}
         </View>
 
         {/* Figma: 2×2 — Website | GitHub / LinkedIn | Email */}
         <View style={cardStyle}>
-          <Text className="mb-3 text-sm font-bold uppercase tracking-wide text-forum-ink">💼 CONTATO</Text>
+          <Text className="mb-3 text-sm font-bold uppercase tracking-wide text-gray-800">💼 CONTATO</Text>
           <View style={{ gap: 10 }}>
             <View style={{ flexDirection: 'row', gap: 10 }}>
               <Pressable
@@ -336,7 +336,7 @@ export function ProfessionalProfileScreen({
                   backgroundColor: '#F3F4F6',
                 }}>
                 <FontAwesome name="github" size={22} color="#374151" />
-                <Text className="mt-1 text-xs font-semibold text-forum-ink">GitHub</Text>
+                <Text className="mt-1 text-xs font-semibold text-gray-700">GitHub</Text>
               </Pressable>
             </View>
             <View style={{ flexDirection: 'row', gap: 10 }}>

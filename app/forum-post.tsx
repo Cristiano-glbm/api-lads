@@ -28,15 +28,19 @@ export default function ForumPostRoute() {
         const replies = p.comments?.map((c) => ({
           id: c.id,
           author: c.author?.name ?? 'Anônimo',
+          authorId: c.author?.id,
           text: c.content,
         }));
         setPost({
           id: p.id,
           title: p.title,
           author: p.author?.name ?? 'Anônimo',
+          authorId: p.author?.id,
           body: p.content,
+          imageUrl: p.imageUrl,
           date: p.createdAt ? new Date(p.createdAt).toLocaleDateString('pt-BR') : undefined,
-          likes: p._count?.likes ?? p.likes ?? 0,
+          likes: p._count?.postLikes ?? p._count?.likes ?? p.likes ?? 0,
+          liked: p.liked ?? false,
           comments: p._count?.comments ?? 0,
           tag,
           icon,

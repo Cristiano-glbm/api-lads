@@ -12,7 +12,9 @@ export interface ApiNotification {
 
 interface NotificationsResponse {
   success: boolean;
-  data: { notifications: ApiNotification[] };
+  data: ApiNotification[];
+  pagination?: unknown;
+  unreadCount?: number;
 }
 
 interface UnreadCountResponse {
@@ -22,7 +24,7 @@ interface UnreadCountResponse {
 
 export async function listNotifications(): Promise<ApiNotification[]> {
   const res = await api.get<NotificationsResponse>('/api/notifications');
-  return res.data.notifications;
+  return Array.isArray(res.data) ? res.data : [];
 }
 
 export async function getUnreadCount(): Promise<number> {

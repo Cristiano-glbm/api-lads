@@ -19,7 +19,7 @@ import { ServiceEditarPencilIcon } from './ServiceEditarPencilIcon';
 const HEADING = '#1E2939';
 const META = '#64748B';
 
-const CTA_PURPLE = '#432DD7';
+const CTA_PURPLE = '#2563EB';
 
 /** Badge “Orçamento” — tokens do Figma (fundo creme, borda âmbar, texto laranja). */
 const ORCAMENTO_BADGE_BG = '#FFFBEB';

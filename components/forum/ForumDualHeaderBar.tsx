@@ -109,7 +109,7 @@ export function ForumDualHeaderBar({
       </View>
 
       <LinearGradient
-        colors={['#8200DB', '#432DD7']}
+        colors={['#2563EB', '#06B6D4']}
         start={{ x: 0, y: 0.5 }}
         end={{ x: 1, y: 0.5 }}
         style={{

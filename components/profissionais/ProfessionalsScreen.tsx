@@ -59,7 +59,7 @@ export function ProfessionalsScreen({ onPressContratar }: ProfessionalsScreenPro
   return (
     <View className="flex-1 bg-forum-bg">
       <View style={{ flex: 1, minHeight: 0, width: '100%', maxWidth: 448, alignSelf: 'center' }}>
-      <View style={{ backgroundColor: '#432DD7', paddingTop: insets.top }}>
+      <View style={{ backgroundColor: '#0F172A', paddingTop: insets.top }}>
         <LadsTopBar variant="servicos-figma" />
         <View style={{ paddingHorizontal: 16, paddingTop: 4, paddingBottom: 18 }}>
           <Text
@@ -92,7 +92,7 @@ export function ProfessionalsScreen({ onPressContratar }: ProfessionalsScreenPro
           style={{ minHeight: 48, paddingVertical: 12 }}>
           <FontAwesome name="search" size={16} color="#9CA3AF" style={{ marginRight: 10 }} />
           <TextInput
-            className="flex-1 text-base text-forum-ink"
+            className="flex-1 text-base text-gray-900"
             placeholder="Buscar profissionais..."
             placeholderTextColor="#9CA3AF"
             value={query}

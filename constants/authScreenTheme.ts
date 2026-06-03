@@ -1,15 +1,15 @@
 import { Platform } from 'react-native';
 
 /** Fundo — Inspect Figma (gradiente vertical) */
-export const AUTH_BG_GRADIENT: [string, string] = ['#046CD4', '#9810FA'];
+export const AUTH_BG_GRADIENT: [string, string] = ['#020617', '#0F172A'];
 
 /** Botão primário — Fill + borda Inspect Figma */
 /** Fill botão primário — Inspect Figma Cadastro (#4139F6) */
-export const AUTH_BTN_FILL = '#4139F6';
+export const AUTH_BTN_FILL = '#2563EB';
 export const AUTH_BTN_BORDER = 'rgba(0,0,0,0.2)';
 
 /** Links (Esqueci senha, Cadastre-se, Fazer login, Reenviar) */
-export const AUTH_LINK_COLOR = '#4139F6';
+export const AUTH_LINK_COLOR = '#06B6D4';
 
 export const authAndroidFont = () =>
   Platform.OS === 'android' ? { includeFontPadding: false as const } : {};

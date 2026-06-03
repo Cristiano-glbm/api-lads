@@ -3,7 +3,7 @@ import { Platform, Pressable, Text } from 'react-native';
 /** Inspect Figma (chips “Todos”, “Web”, “DevOps”…): pílula, borda interna ~1,067px #E5E7EB */
 const BORDER_W = 16 / 15;
 const BORDER_IDLE = '#E5E7EB';
-const INK_IDLE = '#4A5565';
+const INK_IDLE = '#000000';
 const ACTIVE_BG = '#4F39F6';
 
 /**

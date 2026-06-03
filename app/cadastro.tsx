@@ -176,7 +176,7 @@ export default function CadastroScreen() {
               disabled={loading}
               activeOpacity={0.75}
               style={{
-                backgroundColor: '#4139F6',
+                backgroundColor: '#2563EB',
                 borderRadius: 10,
                 height: 48,
                 alignItems: "center",

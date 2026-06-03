@@ -2,6 +2,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Image, Platform, Pressable, Text, View } from 'react-native';
 
+import { useNotifications } from '@/context/NotificationContext';
+
 export interface LadsTopBarProps {
   /** Cor do “L” dentro do quadrado branco */
   logoTint?: string;
@@ -17,7 +19,7 @@ export interface LadsTopBarProps {
   variant?: 'default' | 'servicos-figma' | 'perfil-figma' | 'meu-perfil-figma';
 }
 
-const FIGMA_BAR_BG = '#432DD7';
+const FIGMA_BAR_BG = '#0F172A';
 const BAR_MAX_WIDTH = 448;
 const BAR_HORIZONTAL_PAD = 16;
 
@@ -27,7 +29,7 @@ const LOGO_L_TYPO = {
   fontSize: 14,
   lineHeight: 20,
   fontStyle: 'normal' as const,
-  color: '#432DD7',
+  color: '#000000',
 };
 
 /**
@@ -166,7 +168,7 @@ const FIGMA_NOTIF_DOT = {
   height: 8,
   borderRadius: 9999,
   borderWidth: 1.067,
-  borderColor: '#432DD7',
+  borderColor: '#0F172A',
   backgroundColor: '#FF8487',
 } as const;
 
@@ -187,6 +189,7 @@ function BellNotificationDot({ right, top }: { right: number; top: number }) {
 /** Sino Figma: PNG export 20×20 (`bell-topbar-figma.png`), alvo 32×32, ponto #FF8487 — reutilizável (ex.: Fórum). */
 export function LadsTopBarBellButton({ onPress }: { onPress?: () => void }) {
   const router = useRouter();
+  const { unreadCount } = useNotifications();
   const handlePress = onPress ?? (() => router.push('/notificacoes'));
   return (
     <Pressable
@@ -200,7 +203,7 @@ export function LadsTopBarBellButton({ onPress }: { onPress?: () => void }) {
         style={{ width: 20, height: 20 }}
         resizeMode="contain"
       />
-      <BellNotificationDot right={4} top={4} />
+      {unreadCount > 0 && <BellNotificationDot right={4} top={4} />}
     </Pressable>
   );
 }
@@ -215,7 +218,7 @@ const MEU_PERFIL_SUB = {
 } as const;
 
 export function LadsTopBar({
-  logoTint = '#5D3FD3',
+  logoTint = '#000000',
   onPressBell,
   onPressSettings,
   variant = 'default',
@@ -237,9 +240,11 @@ export function LadsTopBar({
         }}>
         <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', minWidth: 0, height: 56, paddingRight: 8 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
-            <View style={LOGO_L_SHELL_STYLE}>
-              <Text style={LOGO_L_TYPO}>L</Text>
-            </View>
+            <Image
+              source={require('@/assets/images/logo.png')}
+              style={{ width: 32, height: 32 }}
+              resizeMode="contain"
+            />
             <View style={{ flex: 1, minWidth: 0, justifyContent: 'center' }}>
               <Text style={LADS_WORDMARK}>LADS</Text>
               <Text style={MEU_PERFIL_SUB} numberOfLines={1}>
@@ -279,9 +284,11 @@ export function LadsTopBar({
         }}>
         <View style={FIGMA_SERVICOS_LEFT_CLUSTER}>
           <View style={FIGMA_SERVICOS_LOGO_WORDMARK_ROW}>
-            <View style={LOGO_L_SHELL_STYLE}>
-              <Text style={LOGO_L_TYPO}>L</Text>
-            </View>
+            <Image
+              source={require('@/assets/images/logo.png')}
+              style={{ width: 32, height: 32 }}
+              resizeMode="contain"
+            />
             <View style={LADS_WORDMARK_CONTAINER_SERVICOS}>
               <Text style={LADS_WORDMARK}>LADS</Text>
             </View>
@@ -295,9 +302,11 @@ export function LadsTopBar({
   return (
     <View className="flex-row items-center justify-between px-4 pb-2">
       <View className="flex-row items-center">
-        <View style={LOGO_L_SHELL_STYLE}>
-          <Text style={[LOGO_L_TYPO, { color: logoTint }]}>L</Text>
-        </View>
+        <Image
+          source={require('@/assets/images/logo.png')}
+          style={{ width: 32, height: 32 }}
+          resizeMode="contain"
+        />
         <Text className="ml-2" style={LADS_WORDMARK}>
           LADS
         </Text>

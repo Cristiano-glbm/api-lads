@@ -77,8 +77,11 @@ export async function createRequest(data: {
   descricao?: string;
   orcamento?: string;
   prazo?: string;
+  anexoUri?: string;
 }): Promise<ApiServiceRequest> {
-  const res = await api.post<RequestResponse>('/api/services/requests', data);
+  const { anexoUri, ...rest } = data;
+  const payload = anexoUri ? { ...rest, meta: JSON.stringify({ anexoUri }) } : rest;
+  const res = await api.post<RequestResponse>('/api/services/requests', payload);
   return res.data.request;
 }
 

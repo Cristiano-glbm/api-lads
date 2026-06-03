@@ -6,9 +6,9 @@
  */
 
 /** Roxo de marca (alinhado ao fim do gradiente do header): chips ativos, tab ativa, tags. */
-export const FORUM_BRAND_PURPLE = '#432DD7';
+export const FORUM_BRAND_PURPLE = '#2563EB';
 /** Fundo suave para chips de categoria nos posts */
-export const FORUM_BRAND_PURPLE_SOFT = '#F3E8FF';
+export const FORUM_BRAND_PURPLE_SOFT = '#1E293B';
 
 /** Padding horizontal/vertical da área de conteúdo (chips + lista) */
 export const FORUM_HOME_MAIN_CONTENT_PAD = 16;

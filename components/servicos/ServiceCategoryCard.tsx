@@ -74,7 +74,7 @@ export function ServiceCategoryCard({ item, onPress }: ServiceCategoryCardProps)
             fontSize: 12,
             lineHeight: 16.5,
             fontStyle: 'normal' as const,
-            color: '#8200DB',
+            color: '#06B6D4',
             textAlign: 'left' as const,
             ...(Platform.OS === 'android' ? { includeFontPadding: false as const } : {}),
           }
@@ -116,7 +116,7 @@ export function ServiceCategoryCard({ item, onPress }: ServiceCategoryCardProps)
             fontSize: 12,
             lineHeight: 16,
             fontStyle: 'normal' as const,
-            color: '#8200DB',
+            color: '#06B6D4',
             textAlign: 'left' as const,
             ...(Platform.OS === 'android' ? { includeFontPadding: false as const } : {}),
           }

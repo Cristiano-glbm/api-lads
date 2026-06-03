@@ -9,11 +9,11 @@ import { useAuth } from '@/context/AuthContext';
 
 const PAGE_BG = '#F9FAFB';
 const HEADER_PURPLE = '#432DD7';
-const CTA_PURPLE = '#5B1CFA';
+const CTA_PURPLE = '#2563EB';
 /** Inspect Figma — texto «Acesso rápido» (Inter 500, 12/16) */
-const ACESSO_RAPIDO_LABEL_SERVICOS = '#432BD7';
-const ACESSO_RAPIDO_LABEL_PROFIS = '#8200DB';
-const ACESSO_RAPIDO_LABEL_FORUM = '#1447E6';
+const ACESSO_RAPIDO_LABEL_SERVICOS = '#2563EB';
+const ACESSO_RAPIDO_LABEL_PROFIS = '#06B6D4';
+const ACESSO_RAPIDO_LABEL_FORUM = '#2563EB';
 const ACESSO_RAPIDO_LABEL_TYPO = {
   fontFamily: 'Inter_500Medium',
   fontSize: 12,

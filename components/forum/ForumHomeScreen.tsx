@@ -140,12 +140,12 @@ export function ForumHomeScreen() {
             flexDirection: 'row',
             alignItems: 'center',
             gap: 8,
-            backgroundColor: '#432DD7',
+            backgroundColor: '#2563EB',
             borderRadius: 9999,
             paddingVertical: 12,
             paddingHorizontal: 18,
             opacity: pressed ? 0.88 : 1,
-            shadowColor: '#432DD7',
+            shadowColor: '#2563EB',
             shadowOffset: { width: 0, height: 4 },
             shadowOpacity: 0.35,
             shadowRadius: 8,
@@ -186,7 +186,7 @@ export function ForumHomeScreen() {
                 backgroundColor: '#FFFFFF',
                 borderRadius: 12,
                 borderWidth: 1,
-                borderColor: query ? '#432DD7' : '#E5E7EB',
+                borderColor: query ? '#2563EB' : '#E5E7EB',
                 paddingHorizontal: 14,
                 paddingVertical: 10,
                 gap: 10,
@@ -199,7 +199,7 @@ export function ForumHomeScreen() {
               <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
                 <Path
                   d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"
-                  stroke={query ? '#432DD7' : '#9CA3AF'}
+                  stroke={query ? '#2563EB' : '#9CA3AF'}
                   strokeWidth={2}
                   strokeLinecap="round"
                   strokeLinejoin="round"

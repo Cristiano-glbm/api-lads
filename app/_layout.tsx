@@ -15,10 +15,12 @@ import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
+import React from 'react';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/components/useColorScheme';
-import { AuthProvider } from '@/context/AuthContext';
+import { AuthProvider, useAuth } from '@/context/AuthContext';
+import { NotificationProvider } from '@/context/NotificationContext';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -68,14 +70,25 @@ function RootLayoutNav() {
 
   return (
     <AuthProvider>
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="index" />
-        <Stack.Screen name="login" />
-        <Stack.Screen name="cadastro" />
-        <Stack.Screen name="home" />
-      </Stack>
-    </ThemeProvider>
+      <NotificationProviderWrapper>
+        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="index" />
+            <Stack.Screen name="login" />
+            <Stack.Screen name="cadastro" />
+            <Stack.Screen name="home" />
+          </Stack>
+        </ThemeProvider>
+      </NotificationProviderWrapper>
     </AuthProvider>
+  );
+}
+
+function NotificationProviderWrapper({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated } = useAuth();
+  return (
+    <NotificationProvider isAuthenticated={isAuthenticated}>
+      {children}
+    </NotificationProvider>
   );
 }

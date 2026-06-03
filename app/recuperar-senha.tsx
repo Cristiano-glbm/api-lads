@@ -165,7 +165,7 @@ export default function RecuperarSenhaScreen() {
               onPress={() => router.replace('/login')}
               activeOpacity={0.8}
               style={{
-                backgroundColor: '#4139F6',
+                backgroundColor: '#2563EB',
                 borderRadius: 10,
                 height: 48,
                 alignItems: 'center',
@@ -275,7 +275,7 @@ export default function RecuperarSenhaScreen() {
               disabled={loading}
               activeOpacity={0.75}
               style={{
-                backgroundColor: '#4139F6',
+                backgroundColor: '#2563EB',
                 borderRadius: 10,
                 height: 48,
                 alignItems: 'center',

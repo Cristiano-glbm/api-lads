@@ -4,13 +4,15 @@ export interface ApiForumPost {
   id: string;
   title: string;
   content?: string;
+  imageUrl?: string;
   icon?: string;
   tag?: string;
   likes: number;
+  liked?: boolean;
   pinned: boolean;
   createdAt: string;
   author: { id: string; name: string; avatar?: string };
-  _count?: { comments: number; likes: number };
+  _count?: { comments: number; postLikes?: number; likes?: number };
 }
 
 export interface ApiForumComment {
@@ -39,6 +41,7 @@ interface CommentsResponse {
 export interface CreatePostData {
   title: string;
   content?: string;
+  imageUrl?: string;
   icon?: string;
   tag?: string;
 }
@@ -57,8 +60,8 @@ export async function listPosts(params?: {
   return res.data;
 }
 
-export async function getPost(id: string): Promise<ApiForumPost & { comments?: ApiForumComment[] }> {
-  const res = await api.get<PostResponse>(`/api/forum/posts/${id}`, false);
+export async function getPost(id: string): Promise<ApiForumPost & { comments?: ApiForumComment[]; liked?: boolean }> {
+  const res = await api.get<PostResponse>(`/api/forum/posts/${id}`, true);
   return res.data;
 }
 

@@ -19,7 +19,7 @@ const androidNoPad = Platform.OS === 'android' ? { includeFontPadding: false as 
 function buttonColors(btnStyle?: LadsModalButton['style']) {
   if (btnStyle === 'destructive') return { bg: '#EF4444', text: '#FFFFFF', border: 'transparent' };
   if (btnStyle === 'cancel') return { bg: '#FFFFFF', text: '#374151', border: '#D1D5DB' };
-  return { bg: '#432DD7', text: '#FFFFFF', border: 'transparent' };
+  return { bg: '#2563EB', text: '#FFFFFF', border: 'transparent' };
 }
 
 export function LadsModal({ visible, title, message, buttons, onRequestClose }: LadsModalProps) {

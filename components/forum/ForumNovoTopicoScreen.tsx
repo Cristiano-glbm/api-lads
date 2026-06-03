@@ -1,7 +1,11 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
+import * as ImagePicker from 'expo-image-picker';
 import {
+  ActionSheetIOS,
+  Alert,
   ActivityIndicator,
+  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -104,11 +108,44 @@ export function ForumNovoTopicoScreen() {
   const [apenasMemb, setApenasMemb] = useState(false);
   const [showCatPicker, setShowCatPicker] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [imageUri, setImageUri] = useState<string | null>(null);
 
   const cardShadow = Platform.OS === 'web' ? CARD_SHADOW_WEB : CARD_SHADOW_NATIVE;
   const scrollBottomPad = 20 + FORUM_BOTTOM_NAV_ROW_HEIGHT + Math.max(insets.bottom, 0);
 
   const podePubulicar = titulo.trim().length > 0;
+
+  async function pickImage(source: 'gallery' | 'camera') {
+    let result: ImagePicker.ImagePickerResult;
+    if (source === 'camera') {
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== 'granted') { Alert.alert('Permissão necessária', 'Precisamos de acesso à câmera.'); return; }
+      result = await ImagePicker.launchCameraAsync({ mediaTypes: ['images'], quality: 0.7, base64: true });
+    } else {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') { Alert.alert('Permissão necessária', 'Precisamos de acesso à galeria.'); return; }
+      result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.7, base64: true });
+    }
+    if (!result.canceled && result.assets[0]) {
+      const asset = result.assets[0];
+      setImageUri(asset.base64 ? `data:image/jpeg;base64,${asset.base64}` : asset.uri);
+    }
+  }
+
+  function handlePickImagem() {
+    if (Platform.OS === 'ios') {
+      ActionSheetIOS.showActionSheetWithOptions(
+        { options: ['Cancelar', 'Câmera', 'Galeria'], cancelButtonIndex: 0 },
+        (idx) => { if (idx === 1) pickImage('camera'); else if (idx === 2) pickImage('gallery'); },
+      );
+    } else {
+      Alert.alert('Adicionar imagem', 'Escolha uma opção', [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Câmera', onPress: () => pickImage('camera') },
+        { text: 'Galeria', onPress: () => pickImage('gallery') },
+      ]);
+    }
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: '#F3F4F6' }}>
@@ -142,7 +179,7 @@ export function ForumNovoTopicoScreen() {
         </View>
 
         <LinearGradient
-          colors={['#8200DB', '#432DD7']}
+          colors={['#2563EB', '#06B6D4']}
           start={{ x: 0, y: 0.5 }}
           end={{ x: 1, y: 0.5 }}
           style={{ width: '100%', paddingHorizontal: 16, paddingVertical: 12, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
@@ -269,6 +306,45 @@ export function ForumNovoTopicoScreen() {
               />
             </View>
 
+            {/* Imagem opcional */}
+            <View>
+              <Text {...androidNoPad} style={{ fontFamily: 'Inter_600SemiBold', fontSize: 13, lineHeight: 18, color: '#374151', marginBottom: 6 }}>
+                Imagem (opcional):
+              </Text>
+              {imageUri ? (
+                <View style={{ gap: 8 }}>
+                  <Image
+                    source={{ uri: imageUri }}
+                    style={{ width: '100%', height: 160, borderRadius: 8, backgroundColor: '#F3F4F6' }}
+                    resizeMode="cover"
+                  />
+                  <Pressable onPress={() => setImageUri(null)} hitSlop={8} style={{ alignSelf: 'flex-end' }}>
+                    <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 13, color: '#EF4444' }}>Remover imagem</Text>
+                  </Pressable>
+                </View>
+              ) : (
+                <Pressable
+                  onPress={handlePickImagem}
+                  style={({ pressed }) => ({
+                    borderWidth: 1,
+                    borderColor: '#E5E7EB',
+                    borderRadius: 8,
+                    paddingVertical: 14,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 8,
+                    backgroundColor: '#FAFAFA',
+                    opacity: pressed ? 0.8 : 1,
+                  })}>
+                  <Text style={{ fontSize: 18 }}>🖼️</Text>
+                  <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: '#6B7280' }}>
+                    Adicionar imagem
+                  </Text>
+                </Pressable>
+              )}
+            </View>
+
             {/* Divisor */}
             <View style={{ height: 1, backgroundColor: '#F3F4F6' }} />
 
@@ -327,7 +403,7 @@ export function ForumNovoTopicoScreen() {
                   if (submitting) return;
                   setSubmitting(true);
                   try {
-                    await forumService.createPost({ title: titulo, content: descricao, tag: categoria });
+                    await forumService.createPost({ title: titulo, content: descricao, tag: categoria, imageUrl: imageUri ?? undefined });
                     router.back();
                   } catch {
                     // stay on screen so user can retry

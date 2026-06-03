@@ -3,6 +3,7 @@ import { useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -11,10 +12,12 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 
 import { FORUM_HOME_HEADER } from '@/constants/forumMock';
 import * as forumService from '@/services/forumService';
 import type { ForumPost, ForumReply } from '@/types/forum';
+import { useAuth } from '@/context/AuthContext';
 
 import { ForumBackArrowIcon20 } from './ForumBackArrowIcon20';
 import { ForumBottomNav } from './ForumBottomNav';
@@ -95,13 +98,35 @@ export function ForumPostDetailScreen({ post }: ForumPostDetailScreenProps) {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const scrollRef = useRef<ScrollView>(null);
+  const { user } = useAuth();
 
   const [replies, setReplies] = useState<ForumReply[]>(post.replies ?? []);
   const [commentText, setCommentText] = useState('');
   const [sending, setSending] = useState(false);
+  const [liked, setLiked] = useState(post.liked ?? false);
+  const [likesCount, setLikesCount] = useState(post.likes ?? 0);
+  const [likingInProgress, setLikingInProgress] = useState(false);
 
   const cardShadow = Platform.OS === 'web' ? CARD_SHADOW_WEB : CARD_SHADOW_NATIVE;
   const scrollBottomPad = 16;
+
+  async function handleToggleLike() {
+    if (likingInProgress) return;
+    setLikingInProgress(true);
+    // Optimistic update
+    const wasLiked = liked;
+    setLiked(!wasLiked);
+    setLikesCount((c) => (wasLiked ? Math.max(0, c - 1) : c + 1));
+    try {
+      await forumService.likePost(post.id);
+    } catch {
+      // Revert on error
+      setLiked(wasLiked);
+      setLikesCount((c) => (wasLiked ? c + 1 : Math.max(0, c - 1)));
+    } finally {
+      setLikingInProgress(false);
+    }
+  }
 
   async function handleSendComment() {
     const content = commentText.trim();
@@ -113,7 +138,8 @@ export function ForumPostDetailScreen({ post }: ForumPostDetailScreenProps) {
         ...prev,
         {
           id: newComment.id ?? String(Date.now()),
-          author: newComment.author?.name ?? 'Você',
+          author: newComment.author?.name ?? user?.name ?? 'Você',
+          authorId: newComment.author?.id ?? user?.id,
           text: content,
         },
       ]);
@@ -123,6 +149,15 @@ export function ForumPostDetailScreen({ post }: ForumPostDetailScreenProps) {
       /* keep text, let user retry */
     } finally {
       setSending(false);
+    }
+  }
+
+  async function handleDeleteComment(commentId: string) {
+    setReplies((prev) => prev.filter((r) => r.id !== commentId));
+    try {
+      await forumService.deleteComment(commentId);
+    } catch {
+      // Re-fetch would be ideal; for now silently keep optimistic delete
     }
   }
 
@@ -161,7 +196,7 @@ export function ForumPostDetailScreen({ post }: ForumPostDetailScreenProps) {
 
         {/* Faixa roxa com título e autor do post */}
         <LinearGradient
-          colors={['#8200DB', '#432DD7']}
+          colors={['#2563EB', '#06B6D4']}
           start={{ x: 0, y: 0.5 }}
           end={{ x: 1, y: 0.5 }}
           style={{ width: '100%', paddingHorizontal: 16, paddingVertical: 12 }}>
@@ -236,6 +271,50 @@ export function ForumPostDetailScreen({ post }: ForumPostDetailScreenProps) {
               }}
             />
           ) : null}
+
+          {/* Imagem do post */}
+          {post.imageUrl ? (
+            <Image
+              source={{ uri: post.imageUrl }}
+              style={{ width: '100%', height: 200, borderRadius: 10, marginTop: 12, backgroundColor: '#F3F4F6' }}
+              resizeMode="cover"
+            />
+          ) : null}
+
+          {/* Barra de curtir */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 14, gap: 6 }}>
+            <Pressable
+              onPress={handleToggleLike}
+              disabled={likingInProgress}
+              style={({ pressed }) => ({
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 6,
+                paddingVertical: 7,
+                paddingHorizontal: 14,
+                borderRadius: 20,
+                borderWidth: 1,
+                borderColor: liked ? '#432DD7' : '#E5E7EB',
+                backgroundColor: liked ? '#EEF2FF' : '#F9FAFB',
+                opacity: pressed ? 0.75 : 1,
+              })}>
+              <Ionicons
+                name={liked ? 'heart' : 'heart-outline'}
+                size={16}
+                color={liked ? '#EF4444' : '#6B7280'}
+              />
+              <Text
+                {...androidNoPad}
+                style={{
+                  fontFamily: 'Inter_600SemiBold',
+                  fontSize: 13,
+                  color: liked ? '#432DD7' : '#6B7280',
+                  lineHeight: 18,
+                }}>
+                {likesCount > 0 ? likesCount : ''}{likesCount > 0 ? ' ' : ''}{liked ? 'Curtido' : 'Curtir'}
+              </Text>
+            </Pressable>
+          </View>
         </View>
 
         {/* Seção de comentários */}
@@ -265,17 +344,28 @@ export function ForumPostDetailScreen({ post }: ForumPostDetailScreenProps) {
                   marginBottom: 8,
                   ...cardShadow,
                 }}>
-                <Text
-                  {...androidNoPad}
-                  style={{
-                    fontFamily: 'Inter_600SemiBold',
-                    fontSize: 13,
-                    lineHeight: 18,
-                    color: reply.isLads ? '#432DD7' : '#1E2939',
-                    marginBottom: 4,
-                  }}>
-                  {reply.author}
-                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                  <Text
+                    {...androidNoPad}
+                    style={{
+                      fontFamily: 'Inter_600SemiBold',
+                      fontSize: 13,
+                      lineHeight: 18,
+                      color: reply.isLads ? '#432DD7' : '#1E2939',
+                      marginBottom: 4,
+                      flex: 1,
+                    }}>
+                    {reply.author}
+                  </Text>
+                  {(reply.authorId && reply.authorId === user?.id) || user?.role === 'ADMIN' ? (
+                    <Pressable
+                      onPress={() => handleDeleteComment(reply.id)}
+                      hitSlop={8}
+                      style={{ paddingLeft: 8, paddingTop: 2 }}>
+                      <Text style={{ fontSize: 14, color: '#9CA3AF' }}>✕</Text>
+                    </Pressable>
+                  ) : null}
+                </View>
                 <TextWithMentions
                   text={reply.text}
                   style={{

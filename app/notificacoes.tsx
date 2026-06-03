@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { ApiNotification } from '@/services/notificationsService';
 import * as notificationsService from '@/services/notificationsService';
+import { useNotifications } from '@/context/NotificationContext';
 
 const HEADER_PURPLE = '#432DD7';
 
@@ -175,6 +176,7 @@ export default function NotificacoesScreen() {
   const router = useRouter();
   const [notifs, setNotifs] = useState<Notificacao[]>([]);
   const [apiLoading, setApiLoading] = useState(true);
+  const { refreshUnreadCount, resetUnreadCount } = useNotifications();
 
   useEffect(() => {
     notificationsService.listNotifications()
@@ -187,11 +189,15 @@ export default function NotificacoesScreen() {
 
   async function marcarLida(id: string) {
     setNotifs((prev) => prev.map((n) => (n.id === id ? { ...n, lida: true } : n)));
-    try { await notificationsService.markRead(id); } catch { /* silent */ }
+    try {
+      await notificationsService.markRead(id);
+      await refreshUnreadCount();
+    } catch { /* silent */ }
   }
 
   async function marcarTodasLidas() {
     setNotifs((prev) => prev.map((n) => ({ ...n, lida: true })));
+    resetUnreadCount();
     try { await notificationsService.markAllRead(); } catch { /* silent */ }
   }
 

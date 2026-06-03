@@ -267,7 +267,7 @@ export function EditarPerfilScreen() {
       {/* ── Header ── */}
       <View style={{ width: '100%', maxWidth: MAX_WIDTH, alignSelf: 'center' }}>
         <LinearGradient
-          colors={['#432DD7', '#8200DB']}
+          colors={['#0F172A', '#1E293B']}
           start={{ x: 0.5, y: 0 }}
           end={{ x: 0.5, y: 1 }}
           style={{ paddingTop: insets.top }}>
@@ -316,9 +316,9 @@ export function EditarPerfilScreen() {
                   alignItems: 'center',
                   justifyContent: 'center',
                   borderWidth: 2,
-                  borderColor: '#432DD7',
+                  borderColor: '#2563EB',
                 }}>
-                <Ionicons name="camera" size={14} color="#432DD7" />
+                <Ionicons name="camera" size={14} color="#2563EB" />
               </View>
             </Pressable>
 

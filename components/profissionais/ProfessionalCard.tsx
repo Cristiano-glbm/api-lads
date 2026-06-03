@@ -5,7 +5,7 @@ import { Image, Linking, Platform, Pressable, Text, View, useWindowDimensions } 
 import type { ProfessionalListItem } from '@/types/professional';
 
 /** Alinhado ao texto secundário do cartão (`text-forum-muted`) */
-const AFFILIATION_ICON = '#6B7280';
+const AFFILIATION_ICON = '#000000';
 
 /** Figma Inspect — LinkedIn */
 const LINK_BLUE = '#1447E6';
@@ -56,19 +56,19 @@ export function ProfessionalCard({ professional, onPressContratar }: Professiona
           className="h-16 w-16 rounded-full border border-gray-100"
         />
         <View className="ml-3 flex-1">
-          <Text className="text-base font-bold text-forum-ink">{professional.name}</Text>
+          <Text className="text-base font-bold text-gray-900">{professional.name}</Text>
           <Text className="mt-0.5 text-sm text-forum-primary">
             ⭐ {professional.role}
           </Text>
           <View className="mt-0.5 flex-row items-center" style={{ gap: 5 }}>
             <Ionicons name="location-outline" size={14} color={AFFILIATION_ICON} />
-            <Text className="min-w-0 flex-1 text-xs leading-4 text-forum-muted" numberOfLines={2}>
+            <Text className="min-w-0 flex-1 text-xs leading-4 text-gray-500" numberOfLines={2}>
               {professional.affiliation}
             </Text>
           </View>
           <View className="mt-1 flex-row items-center" style={{ gap: 4 }}>
             <Ionicons name="people-outline" size={14} color={AFFILIATION_ICON} />
-            <Text className="text-xs text-forum-muted">{professional.followers} seguidores</Text>
+            <Text className="text-xs text-gray-500">{professional.followers} seguidores</Text>
           </View>
         </View>
       </View>
@@ -95,7 +95,7 @@ export function ProfessionalCard({ professional, onPressContratar }: Professiona
               className="min-h-[48px] flex-1 flex-row items-center justify-center px-3 py-3 active:opacity-80"
               style={[
                 actionBtnShell,
-                { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#94A3B8' },
+                { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#000000' },
               ]}>
               <FontAwesome name="github" size={18} color={GITHUB_SLATE} />
               <Text numberOfLines={1} style={{ ...ACTION_LABEL, color: GITHUB_SLATE }}>
@@ -109,7 +109,7 @@ export function ProfessionalCard({ professional, onPressContratar }: Professiona
             onPress={() => onPressContratar?.(professional.id)}
             className="min-h-[48px] w-full flex-row items-center justify-center px-3 py-3 active:opacity-90"
             style={[actionBtnShell, { backgroundColor: CTA_BG }]}>
-            <FontAwesome name="user-plus" size={18} color="#FFFFFF" />
+            <FontAwesome name="user-plus" size={18} color="#ffffff" />
             <Text numberOfLines={1} style={{ ...ACTION_LABEL, color: '#FFFFFF' }}>
               Contratar
             </Text>
@@ -136,7 +136,7 @@ export function ProfessionalCard({ professional, onPressContratar }: Professiona
             className="min-h-[48px] min-w-0 flex-1 flex-row items-center justify-center px-3 py-3 active:opacity-80"
             style={[
               actionBtnShell,
-              { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#94A3B8' },
+              { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#000000' },
             ]}>
             <FontAwesome name="github" size={18} color={GITHUB_SLATE} />
             <Text numberOfLines={1} style={{ ...ACTION_LABEL, color: GITHUB_SLATE }}>
@@ -149,8 +149,8 @@ export function ProfessionalCard({ professional, onPressContratar }: Professiona
             onPress={() => onPressContratar?.(professional.id)}
             className="min-h-[48px] min-w-0 flex-1 flex-row items-center justify-center px-3 py-3 active:opacity-90"
             style={[actionBtnShell, { backgroundColor: CTA_BG }]}>
-            <FontAwesome name="user-plus" size={18} color="#FFFFFF" />
-            <Text numberOfLines={1} style={{ ...ACTION_LABEL, color: '#FFFFFF' }}>
+            <FontAwesome name="user-plus" size={18} color="#000000" />
+            <Text numberOfLines={1} style={{ ...ACTION_LABEL, color: '#000000' }}>
               Contratar
             </Text>
           </Pressable>
